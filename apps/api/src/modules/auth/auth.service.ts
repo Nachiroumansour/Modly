@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { Prisma } from '@prisma/client';
 import type { Role } from '@moodly/shared';
 import { ApiError } from '../../lib/errors.js';
 import { signAccessToken, signRefreshToken } from '../../lib/jwt.js';
@@ -36,19 +37,22 @@ export async function register(input: {
   name: string;
   role: Role;
 }) {
-  const existing = await prisma.user.findUnique({ where: { phone: input.phone } });
-  if (existing) {
-    throw new ApiError(409, 'TELEPHONE_DEJA_UTILISE', 'Ce numéro est déjà inscrit.');
-  }
   const passwordHash = await bcrypt.hash(input.password, 10);
-  const user = await prisma.user.create({
-    data: {
-      phone: input.phone,
-      passwordHash,
-      name: input.name,
-      role: input.role,
-      ...(input.role === 'TAILLEUR' ? { tailorProfile: { create: {} } } : {}),
-    },
-  });
-  return { user: toPublicUser(user), ...tokensFor(user) };
+  try {
+    const user = await prisma.user.create({
+      data: {
+        phone: input.phone,
+        passwordHash,
+        name: input.name,
+        role: input.role,
+        ...(input.role === 'TAILLEUR' ? { tailorProfile: { create: {} } } : {}),
+      },
+    });
+    return { user: toPublicUser(user), ...tokensFor(user) };
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      throw new ApiError(409, 'TELEPHONE_DEJA_UTILISE', 'Ce numéro est déjà inscrit.');
+    }
+    throw err;
+  }
 }
