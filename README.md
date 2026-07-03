@@ -10,6 +10,7 @@ Prérequis : Node ≥ 20, Docker.
 ```bash
 docker compose up -d        # PostgreSQL (port 5433)
 npm install
+cp apps/api/.env.example apps/api/.env
 cd apps/api && npx prisma migrate dev && cd ../..
 npm run dev:api             # API sur http://localhost:3000
 ```
