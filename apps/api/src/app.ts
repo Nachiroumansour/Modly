@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import { errorHandler } from './lib/errors.js';
 import { authRouter } from './modules/auth/auth.routes.js';
+import { designsRouter } from './modules/designs/designs.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 
 export function createApp() {
@@ -20,6 +21,7 @@ export function createApp() {
 
   app.use('/auth', authRouter);
   app.use(usersRouter);
+  app.use('/designs', designsRouter);
 
   app.use((_req, res) => {
     res.status(404).json({

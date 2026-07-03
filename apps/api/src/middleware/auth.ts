@@ -32,3 +32,15 @@ export function requireRole(role: 'TAILLEUR' | 'CLIENT') {
     next();
   };
 }
+
+export function optionalAuth(req: Request, _res: Response, next: NextFunction) {
+  const header = req.headers.authorization;
+  if (header?.startsWith('Bearer ')) {
+    try {
+      req.user = verifyAccessToken(header.slice('Bearer '.length));
+    } catch {
+      // Token absent ou invalide : on continue en anonyme.
+    }
+  }
+  next();
+}
