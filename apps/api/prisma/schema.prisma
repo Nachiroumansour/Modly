@@ -22,6 +22,12 @@ model User {
   email         String?
   createdAt     DateTime       @default(now())
   tailorProfile TailorProfile?
+  designs       Design[]
+  likes         Like[]
+  bookmarks     Bookmark[]
+  comments      Comment[]
+  following     Follow[]       @relation("following")
+  followers     Follow[]       @relation("followers")
 
   @@map("users")
 }
@@ -39,4 +45,87 @@ model TailorProfile {
   verified        Boolean  @default(false)
 
   @@map("tailor_profiles")
+}
+
+enum DesignCategory {
+  BOUBOU
+  ROBE
+  ENSEMBLE
+  ENFANT
+  MARIAGE
+  TABASKI
+  KORITE
+  MAGAL
+}
+
+model Design {
+  id             String         @id @default(cuid())
+  tailorId       String
+  tailor         User           @relation(fields: [tailorId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?
+  category       DesignCategory
+  imageUrl       String
+  imageWidth     Int
+  imageHeight    Int
+  likesCount     Int            @default(0)
+  commentsCount  Int            @default(0)
+  bookmarksCount Int            @default(0)
+  createdAt      DateTime       @default(now())
+  likes          Like[]
+  bookmarks      Bookmark[]
+  comments       Comment[]
+
+  @@index([category])
+  @@index([tailorId])
+  @@map("designs")
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  designId  String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  design    Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, designId])
+  @@map("likes")
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  designId  String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  design    Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, designId])
+  @@map("bookmarks")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  designId  String
+  text      String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  design    Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([designId])
+  @@map("comments")
+}
+
+model Follow {
+  id         String   @id @default(cuid())
+  followerId String
+  tailorId   String
+  follower   User     @relation("following", fields: [followerId], references: [id], onDelete: Cascade)
+  tailor     User     @relation("followers", fields: [tailorId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([followerId, tailorId])
+  @@map("follows")
 }
