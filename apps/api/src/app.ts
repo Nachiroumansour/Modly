@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import { errorHandler } from './lib/errors.js';
+import { authRouter } from './modules/auth/auth.routes.js';
 
 export function createApp() {
   const app = express();
@@ -10,6 +11,8 @@ export function createApp() {
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
   });
+
+  app.use('/auth', authRouter);
 
   app.use((_req, res) => {
     res.status(404).json({
