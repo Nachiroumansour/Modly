@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: moodly
+      POSTGRES_PASSWORD: moodly
+      POSTGRES_DB: moodly
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./docker/initdb:/docker-entrypoint-initdb.d
+      - moodly_pgdata:/var/lib/postgresql/data
+
+volumes:
+  moodly_pgdata:
