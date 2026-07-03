@@ -64,3 +64,52 @@ describe('POST /auth/register', () => {
     expect(res.body.error.code).toBe('DONNEES_INVALIDES');
   });
 });
+
+describe('POST /auth/login', () => {
+  it('connecte un utilisateur inscrit', async () => {
+    await request(app).post('/auth/register').send(fatou);
+    const res = await request(app)
+      .post('/auth/login')
+      .send({ phone: fatou.phone, password: fatou.password });
+    expect(res.status).toBe(200);
+    expect(res.body.user.name).toBe('Fatou');
+    expect(res.body.accessToken).toBeTruthy();
+    expect(res.body.refreshToken).toBeTruthy();
+  });
+
+  it('refuse un mauvais mot de passe (401)', async () => {
+    await request(app).post('/auth/register').send(fatou);
+    const res = await request(app)
+      .post('/auth/login')
+      .send({ phone: fatou.phone, password: 'mauvais-mdp' });
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('IDENTIFIANTS_INVALIDES');
+  });
+
+  it('refuse un numéro inconnu (401)', async () => {
+    const res = await request(app)
+      .post('/auth/login')
+      .send({ phone: '+221779999999', password: 'nimporte' });
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('IDENTIFIANTS_INVALIDES');
+  });
+});
+
+describe('POST /auth/refresh', () => {
+  it('délivre un nouvel access token', async () => {
+    const reg = await request(app).post('/auth/register').send(fatou);
+    const res = await request(app)
+      .post('/auth/refresh')
+      .send({ refreshToken: reg.body.refreshToken });
+    expect(res.status).toBe(200);
+    expect(res.body.accessToken).toBeTruthy();
+  });
+
+  it('refuse un refresh token invalide (401)', async () => {
+    const res = await request(app)
+      .post('/auth/refresh')
+      .send({ refreshToken: 'token-bidon' });
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('TOKEN_INVALIDE');
+  });
+});

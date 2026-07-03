@@ -56,3 +56,15 @@ export async function register(input: {
     throw err;
   }
 }
+
+export async function login(input: { phone: string; password: string }) {
+  const user = await prisma.user.findUnique({ where: { phone: input.phone } });
+  if (!user || !(await bcrypt.compare(input.password, user.passwordHash))) {
+    throw new ApiError(
+      401,
+      'IDENTIFIANTS_INVALIDES',
+      'Téléphone ou mot de passe incorrect.',
+    );
+  }
+  return { user: toPublicUser(user), ...tokensFor(user) };
+}

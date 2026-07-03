@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { ROLES } from '@moodly/shared';
 import { ApiError } from '../../lib/errors.js';
+import { signAccessToken, verifyRefreshToken } from '../../lib/jwt.js';
 import * as authService from './auth.service.js';
 
 export const authRouter = Router();
@@ -23,4 +24,35 @@ authRouter.post('/register', async (req, res) => {
     throw new ApiError(400, 'DONNEES_INVALIDES', parsed.error.issues[0].message);
   }
   res.status(201).json(await authService.register(parsed.data));
+});
+
+const loginSchema = z.object({
+  phone: phoneSchema,
+  password: z.string().min(1, 'Le mot de passe est requis.'),
+});
+
+authRouter.post('/login', async (req, res) => {
+  const parsed = loginSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new ApiError(400, 'DONNEES_INVALIDES', parsed.error.issues[0].message);
+  }
+  res.json(await authService.login(parsed.data));
+});
+
+const refreshSchema = z.object({
+  refreshToken: z.string().min(1, 'refreshToken manquant.'),
+});
+
+authRouter.post('/refresh', async (req, res) => {
+  const parsed = refreshSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new ApiError(400, 'DONNEES_INVALIDES', parsed.error.issues[0].message);
+  }
+  let payload;
+  try {
+    payload = verifyRefreshToken(parsed.data.refreshToken);
+  } catch {
+    throw new ApiError(401, 'TOKEN_INVALIDE', 'Session expirée, reconnecte-toi.');
+  }
+  res.json({ accessToken: signAccessToken(payload) });
 });
