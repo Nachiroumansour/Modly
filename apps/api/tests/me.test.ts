@@ -67,4 +67,15 @@ describe('requireRole', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true });
   });
+
+  it('renvoie 401 NON_AUTHENTIFIE si requireRole est utilisé sans requireAuth', async () => {
+    const mini = express();
+    mini.get('/oubli-auth', requireRole('TAILLEUR'), (_req, res) => {
+      res.json({ ok: true });
+    });
+    mini.use(errorHandler);
+    const res = await request(mini).get('/oubli-auth');
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('NON_AUTHENTIFIE');
+  });
 });
