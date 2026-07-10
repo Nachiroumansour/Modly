@@ -6,7 +6,12 @@ import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 import { storage } from '../../lib/storage.js';
 import { optionalAuth, requireAuth, requireRole } from '../../middleware/auth.js';
-import { designInclude, toApiDesign } from './designs.service.js';
+import {
+  addReaction,
+  designInclude,
+  removeReaction,
+  toApiDesign,
+} from './designs.service.js';
 
 export const designsRouter = Router();
 
@@ -104,6 +109,26 @@ designsRouter.post(
     res.status(201).json({ design: toApiDesign(design) });
   },
 );
+
+designsRouter.post('/:id/like', requireAuth, async (req, res) => {
+  await addReaction('like', req.user!.sub, req.params.id);
+  res.status(204).send();
+});
+
+designsRouter.delete('/:id/like', requireAuth, async (req, res) => {
+  await removeReaction('like', req.user!.sub, req.params.id);
+  res.status(204).send();
+});
+
+designsRouter.post('/:id/bookmark', requireAuth, async (req, res) => {
+  await addReaction('bookmark', req.user!.sub, req.params.id);
+  res.status(204).send();
+});
+
+designsRouter.delete('/:id/bookmark', requireAuth, async (req, res) => {
+  await removeReaction('bookmark', req.user!.sub, req.params.id);
+  res.status(204).send();
+});
 
 designsRouter.get('/:id', optionalAuth, async (req, res) => {
   const viewerId = req.user?.sub ?? '';
