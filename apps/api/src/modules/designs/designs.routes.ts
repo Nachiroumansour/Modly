@@ -111,29 +111,29 @@ designsRouter.post(
 );
 
 designsRouter.post('/:id/like', requireAuth, async (req, res) => {
-  await addReaction('like', req.user!.sub, req.params.id);
+  await addReaction('like', req.user!.sub, req.params.id as string);
   res.status(204).send();
 });
 
 designsRouter.delete('/:id/like', requireAuth, async (req, res) => {
-  await removeReaction('like', req.user!.sub, req.params.id);
+  await removeReaction('like', req.user!.sub, req.params.id as string);
   res.status(204).send();
 });
 
 designsRouter.post('/:id/bookmark', requireAuth, async (req, res) => {
-  await addReaction('bookmark', req.user!.sub, req.params.id);
+  await addReaction('bookmark', req.user!.sub, req.params.id as string);
   res.status(204).send();
 });
 
 designsRouter.delete('/:id/bookmark', requireAuth, async (req, res) => {
-  await removeReaction('bookmark', req.user!.sub, req.params.id);
+  await removeReaction('bookmark', req.user!.sub, req.params.id as string);
   res.status(204).send();
 });
 
 designsRouter.get('/:id', optionalAuth, async (req, res) => {
   const viewerId = req.user?.sub ?? '';
   const design = await prisma.design.findUnique({
-    where: { id: req.params.id },
+    where: { id: req.params.id as string },
     include: designInclude(viewerId),
   });
   if (!design) {

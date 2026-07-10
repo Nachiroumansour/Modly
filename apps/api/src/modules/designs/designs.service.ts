@@ -9,25 +9,12 @@ export function designInclude(viewerId: string) {
     tailor: { select: publicUserSelect },
     likes: { where: { userId: viewerId }, select: { id: true } },
     bookmarks: { where: { userId: viewerId }, select: { id: true } },
-  } as const;
+  } satisfies Prisma.DesignInclude;
 }
 
-type DesignWithViewer = {
-  id: string;
-  title: string;
-  description: string | null;
-  category: string;
-  imageUrl: string;
-  imageWidth: number;
-  imageHeight: number;
-  likesCount: number;
-  commentsCount: number;
-  bookmarksCount: number;
-  createdAt: Date;
-  tailor: { id: string; name: string; avatarUrl: string | null };
-  likes: { id: string }[];
-  bookmarks: { id: string }[];
-};
+type DesignWithViewer = Prisma.DesignGetPayload<{
+  include: ReturnType<typeof designInclude>;
+}>;
 
 export function toApiDesign(design: DesignWithViewer) {
   const { likes, bookmarks, ...rest } = design;
