@@ -28,6 +28,8 @@ model User {
   comments      Comment[]
   following     Follow[]       @relation("following")
   followers     Follow[]       @relation("followers")
+  clientRecords ClientRecord[] @relation("tailorClientRecords")
+  linkedRecords ClientRecord[] @relation("clientLinkedRecords")
 
   @@map("users")
 }
@@ -128,4 +130,55 @@ model Follow {
 
   @@unique([followerId, tailorId])
   @@map("follows")
+}
+
+enum MeasurementSource {
+  MANUELLE
+  IA
+}
+
+model ClientRecord {
+  id           String        @id @default(cuid())
+  tailorId     String
+  tailor       User          @relation("tailorClientRecords", fields: [tailorId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?         @relation("clientLinkedRecords", fields: [userId], references: [id], onDelete: SetNull)
+  name         String
+  phone        String?
+  stylePref    String?
+  tissuPref    String?
+  coupePref    String?
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  measurements Measurement[]
+
+  @@index([tailorId])
+  @@map("client_records")
+}
+
+model Measurement {
+  id              String            @id @default(cuid())
+  clientRecordId  String
+  clientRecord    ClientRecord      @relation(fields: [clientRecordId], references: [id], onDelete: Cascade)
+  source          MeasurementSource @default(MANUELLE)
+  tourPoitrine    Float?
+  tourTaille      Float?
+  tourHanches     Float?
+  largeurEpaules  Float?
+  longueurBras    Float?
+  tourBras        Float?
+  tourCou         Float?
+  entrejambe      Float?
+  longueurJambe   Float?
+  longueurBoubou  Float?
+  longueurChemise Float?
+  tourCuisse      Float?
+  tourPoignet     Float?
+  carrureDos      Float?
+  longueurManche  Float?
+  createdAt       DateTime          @default(now())
+
+  @@index([clientRecordId])
+  @@map("measurements")
 }
