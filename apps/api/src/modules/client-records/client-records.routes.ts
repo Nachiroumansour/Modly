@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
-import { assertLinkedClient } from './client-records.service.js';
+import { assertLinkedClient, getOwnedRecord } from './client-records.service.js';
 
 export const clientRecordsRouter = Router();
 
@@ -38,4 +38,34 @@ clientRecordsRouter.get('/', async (req, res) => {
     orderBy: { updatedAt: 'desc' },
   });
   res.json({ records });
+});
+
+const updateSchema = createSchema.partial().refine(
+  (d) => Object.keys(d).length > 0,
+  { message: 'Aucune donnée à modifier.' },
+);
+
+clientRecordsRouter.get('/:id', async (req, res) => {
+  const record = await getOwnedRecord(req.user!.sub, req.params.id as string);
+  res.json({ record });
+});
+
+clientRecordsRouter.patch('/:id', async (req, res) => {
+  await getOwnedRecord(req.user!.sub, req.params.id as string);
+  const parsed = updateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new ApiError(400, 'DONNEES_INVALIDES', parsed.error.issues[0].message);
+  }
+  await assertLinkedClient(parsed.data.userId);
+  const record = await prisma.clientRecord.update({
+    where: { id: req.params.id as string },
+    data: parsed.data,
+  });
+  res.json({ record });
+});
+
+clientRecordsRouter.delete('/:id', async (req, res) => {
+  await getOwnedRecord(req.user!.sub, req.params.id as string);
+  await prisma.clientRecord.delete({ where: { id: req.params.id as string } });
+  res.status(204).send();
 });

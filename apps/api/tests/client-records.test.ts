@@ -77,3 +77,44 @@ describe('GET /client-records', () => {
     expect(res.body.records.map((r: { name: string }) => r.name)).not.toContain('PasMoi');
   });
 });
+
+async function createRecord(token: string, name = 'Fiche') {
+  const res = await request(app).post('/client-records').set(auth(token)).send({ name });
+  return res.body.record.id as string;
+}
+
+describe('GET/PATCH/DELETE /client-records/:id', () => {
+  it('lit, modifie puis supprime sa propre fiche', async () => {
+    const id = await createRecord(tailorToken, 'Coumba');
+
+    const get = await request(app).get(`/client-records/${id}`).set(auth(tailorToken));
+    expect(get.status).toBe(200);
+    expect(get.body.record.name).toBe('Coumba');
+
+    const patch = await request(app)
+      .patch(`/client-records/${id}`)
+      .set(auth(tailorToken))
+      .send({ notes: 'Préfère les coupes amples', tissuPref: 'Bazin' });
+    expect(patch.status).toBe(200);
+    expect(patch.body.record.notes).toBe('Préfère les coupes amples');
+    expect(patch.body.record.tissuPref).toBe('Bazin');
+
+    const del = await request(app).delete(`/client-records/${id}`).set(auth(tailorToken));
+    expect(del.status).toBe(204);
+    expect((await request(app).get(`/client-records/${id}`).set(auth(tailorToken))).status).toBe(404);
+  });
+
+  it('404 pour la fiche d’un autre tailleur (pas de fuite)', async () => {
+    const id = await createRecord(autreTailleurToken, 'PasMoi');
+    expect((await request(app).get(`/client-records/${id}`).set(auth(tailorToken))).status).toBe(404);
+    expect(
+      (await request(app).patch(`/client-records/${id}`).set(auth(tailorToken)).send({ notes: 'x' })).status,
+    ).toBe(404);
+    expect((await request(app).delete(`/client-records/${id}`).set(auth(tailorToken))).status).toBe(404);
+  });
+
+  it('refuse un PATCH vide (400)', async () => {
+    const id = await createRecord(tailorToken);
+    expect((await request(app).patch(`/client-records/${id}`).set(auth(tailorToken)).send({})).status).toBe(400);
+  });
+});
