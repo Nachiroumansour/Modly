@@ -7,8 +7,10 @@ import { prisma } from '../../lib/prisma.js';
 import { storage } from '../../lib/storage.js';
 import { optionalAuth, requireAuth, requireRole } from '../../middleware/auth.js';
 import {
+  addComment,
   addReaction,
   designInclude,
+  ensureDesignExists,
   removeReaction,
   toApiDesign,
 } from './designs.service.js';
@@ -34,6 +36,10 @@ const feedQuerySchema = z.object({
   sort: z.enum(['recent', 'tendance']).default('recent'),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+
+const commentSchema = z.object({
+  text: z.string().min(1, 'Le commentaire ne peut pas être vide.').max(500),
 });
 
 designsRouter.get('/', optionalAuth, async (req, res) => {
@@ -128,6 +134,30 @@ designsRouter.post('/:id/bookmark', requireAuth, async (req, res) => {
 designsRouter.delete('/:id/bookmark', requireAuth, async (req, res) => {
   await removeReaction('bookmark', req.user!.sub, req.params.id as string);
   res.status(204).send();
+});
+
+designsRouter.post('/:id/comments', requireAuth, async (req, res) => {
+  const parsed = commentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new ApiError(400, 'DONNEES_INVALIDES', parsed.error.issues[0].message);
+  }
+  const comment = await addComment(
+    req.user!.sub,
+    req.params.id as string,
+    parsed.data.text,
+  );
+  res.status(201).json({ comment });
+});
+
+designsRouter.get('/:id/comments', async (req, res) => {
+  await ensureDesignExists(req.params.id as string);
+  const comments = await prisma.comment.findMany({
+    where: { designId: req.params.id as string },
+    orderBy: { createdAt: 'asc' },
+    take: 100,
+    include: { user: { select: { id: true, name: true, avatarUrl: true } } },
+  });
+  res.json({ comments });
 });
 
 designsRouter.get('/:id', optionalAuth, async (req, res) => {

@@ -81,3 +81,18 @@ export async function removeReaction(
     });
   }
 }
+
+export async function addComment(userId: string, designId: string, text: string) {
+  await ensureDesignExists(designId);
+  const [comment] = await prisma.$transaction([
+    prisma.comment.create({
+      data: { userId, designId, text },
+      include: { user: { select: publicUserSelect } },
+    }),
+    prisma.design.update({
+      where: { id: designId },
+      data: { commentsCount: { increment: 1 } },
+    }),
+  ]);
+  return comment;
+}
