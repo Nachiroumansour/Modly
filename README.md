@@ -51,3 +51,13 @@ Sans `CLOUDINARY_URL`, les images sont stockées dans `apps/api/uploads/` et ser
 - `GET /client-records/:id/measurements` — historique des mesures (antéchronologique)
 
 Un tailleur n'accède qu'à ses propres fiches (contrôle de propriété ; `404` sinon). Les mesures sont *append-only* : une correction crée une nouvelle version.
+
+## API — Commandes (jalon 5)
+
+- `POST /orders` (client) — commander un modèle à un tailleur
+- `GET /orders` — mes commandes (vue client ou tailleur selon le rôle)
+- `GET /orders/:id` — détail + timeline de suivi
+- `PATCH /orders/:id` (tailleur) — prix, paiement, livraison, lier une fiche (fige les mesures)
+- `PATCH /orders/:id/status` (tailleur) — faire avancer la production
+
+Suivi de production : `EN_ATTENTE → TISSU_RECU → COUPE → COUTURE → FINITIONS → PRET → LIVREE` (ou `ANNULEE`). Avance vers l'avant uniquement ; chaque étape est horodatée dans la timeline.
