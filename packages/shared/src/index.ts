@@ -46,3 +46,6 @@ export const MEASUREMENT_FIELDS = [
   { key: 'longueurManche', label: 'Longueur de manche' },
 ] as const;
 export type MeasurementKey = (typeof MEASUREMENT_FIELDS)[number]['key'];
+
+export const MEASUREMENT_SOURCES = ['MANUELLE', 'IA'] as const;
+export type MeasurementSource = (typeof MEASUREMENT_SOURCES)[number];
