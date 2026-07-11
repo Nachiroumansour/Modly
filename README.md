@@ -42,3 +42,12 @@ npm test
 - `PATCH /me/profile` — éditer son profil tailleur
 
 Sans `CLOUDINARY_URL`, les images sont stockées dans `apps/api/uploads/` et servies sur `/uploads`.
+
+## API — Fiches clients (jalon 3, rôle tailleur)
+
+- `GET|POST /client-records` — lister / créer une fiche (client sans compte : nom + téléphone suffisent)
+- `GET|PATCH|DELETE /client-records/:id` — détail (+ dernière mesure) / éditer / supprimer
+- `POST /client-records/:id/measurements` — enregistrer une nouvelle version des 15 mesures
+- `GET /client-records/:id/measurements` — historique des mesures (antéchronologique)
+
+Un tailleur n'accède qu'à ses propres fiches (contrôle de propriété ; `404` sinon). Les mesures sont *append-only* : une correction crée une nouvelle version.

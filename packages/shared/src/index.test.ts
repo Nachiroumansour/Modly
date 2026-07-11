@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DESIGN_CATEGORIES,
   MEASUREMENT_FIELDS,
+  MEASUREMENT_SOURCES,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
   ROLES,
@@ -32,5 +33,10 @@ describe('constantes partagées Moodly', () => {
       'ANNULEE',
     ]);
     expect(PAYMENT_STATUSES).toEqual(['EN_ATTENTE', 'ACOMPTE', 'PAYE']);
+  });
+
+  it('expose les sources de mesure (MANUELLE, IA)', () => {
+    expect(MEASUREMENT_SOURCES).toContain('MANUELLE');
+    expect(MEASUREMENT_SOURCES).toContain('IA');
   });
 });
