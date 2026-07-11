@@ -75,6 +75,7 @@ describe('POST /auth/login', () => {
     expect(res.body.user.name).toBe('Fatou');
     expect(res.body.accessToken).toBeTruthy();
     expect(res.body.refreshToken).toBeTruthy();
+    expect(res.body.user.passwordHash).toBeUndefined();
   });
 
   it('refuse un mauvais mot de passe (401)', async () => {

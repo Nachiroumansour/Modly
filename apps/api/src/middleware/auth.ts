@@ -23,9 +23,24 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
 
 export function requireRole(role: 'TAILLEUR' | 'CLIENT') {
   return (req: Request, _res: Response, next: NextFunction) => {
-    if (req.user?.role !== role) {
+    if (!req.user) {
+      throw new ApiError(401, 'NON_AUTHENTIFIE', 'Connexion requise.');
+    }
+    if (req.user.role !== role) {
       throw new ApiError(403, 'ACCES_REFUSE', 'Tu n\'as pas accès à cette action.');
     }
     next();
   };
+}
+
+export function optionalAuth(req: Request, _res: Response, next: NextFunction) {
+  const header = req.headers.authorization;
+  if (header?.startsWith('Bearer ')) {
+    try {
+      req.user = verifyAccessToken(header.slice('Bearer '.length));
+    } catch {
+      // Token absent ou invalide : on continue en anonyme.
+    }
+  }
+  next();
 }
