@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
-import { assertTailor, publicUserSelect } from './orders.service.js';
+import { assertTailor, getOwnedOrder, publicUserSelect } from './orders.service.js';
 
 export const ordersRouter = Router();
 
@@ -57,4 +57,19 @@ ordersRouter.get('/', async (req, res) => {
     },
   });
   res.json({ orders });
+});
+
+ordersRouter.get('/:id', async (req, res) => {
+  await getOwnedOrder(req.user!.sub, req.params.id as string);
+  const order = await prisma.order.findUnique({
+    where: { id: req.params.id as string },
+    include: {
+      client: { select: publicUserSelect },
+      tailor: { select: publicUserSelect },
+      design: { select: { id: true, title: true, imageUrl: true } },
+      clientRecord: true,
+      events: { orderBy: { createdAt: 'asc' } },
+    },
+  });
+  res.json({ order });
 });

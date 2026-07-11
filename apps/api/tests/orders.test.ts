@@ -75,3 +75,24 @@ describe('GET /orders', () => {
     expect(vueAutre.body.orders).toHaveLength(0);
   });
 });
+
+describe('GET /orders/:id', () => {
+  it('le client et le tailleur voient le détail + la timeline', async () => {
+    const created = await request(app).post('/orders').set(auth(clientToken)).send({ tailorId, designId });
+    const id = created.body.order.id;
+
+    const vueClient = await request(app).get(`/orders/${id}`).set(auth(clientToken));
+    expect(vueClient.status).toBe(200);
+    expect(vueClient.body.order.events).toHaveLength(1);
+    expect(vueClient.body.order.events[0].status).toBe('EN_ATTENTE');
+    expect(vueClient.body.order.tailor.name).toBeTruthy();
+
+    expect((await request(app).get(`/orders/${id}`).set(auth(tailorToken))).status).toBe(200);
+  });
+
+  it('404 pour un tiers non concerné', async () => {
+    const created = await request(app).post('/orders').set(auth(clientToken)).send({ tailorId });
+    const autre = await registerUser(app, 'CLIENT', '+221770008009');
+    expect((await request(app).get(`/orders/${created.body.order.id}`).set(auth(autre.token))).status).toBe(404);
+  });
+});
