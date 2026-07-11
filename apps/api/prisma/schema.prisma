@@ -30,6 +30,8 @@ model User {
   followers     Follow[]       @relation("followers")
   clientRecords ClientRecord[] @relation("tailorClientRecords")
   linkedRecords ClientRecord[] @relation("clientLinkedRecords")
+  clientOrders  Order[]        @relation("clientOrders")
+  tailorOrders  Order[]        @relation("tailorOrders")
 
   @@map("users")
 }
@@ -77,6 +79,7 @@ model Design {
   likes          Like[]
   bookmarks      Bookmark[]
   comments       Comment[]
+  orders         Order[]
 
   @@index([category])
   @@index([tailorId])
@@ -152,6 +155,7 @@ model ClientRecord {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   measurements Measurement[]
+  orders       Order[]
 
   @@index([tailorId])
   @@map("client_records")
@@ -181,4 +185,58 @@ model Measurement {
 
   @@index([clientRecordId])
   @@map("measurements")
+}
+
+enum OrderStatus {
+  EN_ATTENTE
+  TISSU_RECU
+  COUPE
+  COUTURE
+  FINITIONS
+  PRET
+  LIVREE
+  ANNULEE
+}
+
+enum PaymentStatus {
+  EN_ATTENTE
+  ACOMPTE
+  PAYE
+}
+
+model Order {
+  id                   String        @id @default(cuid())
+  clientId             String
+  client               User          @relation("clientOrders", fields: [clientId], references: [id], onDelete: Cascade)
+  tailorId             String
+  tailor               User          @relation("tailorOrders", fields: [tailorId], references: [id], onDelete: Cascade)
+  designId             String?
+  design               Design?       @relation(fields: [designId], references: [id], onDelete: SetNull)
+  clientRecordId       String?
+  clientRecord         ClientRecord? @relation(fields: [clientRecordId], references: [id], onDelete: SetNull)
+  measurementsSnapshot Json?
+  note                 String?
+  agreedPrice          Int?
+  paymentStatus        PaymentStatus @default(EN_ATTENTE)
+  status               OrderStatus   @default(EN_ATTENTE)
+  estimatedDelivery    DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  events               OrderEvent[]
+
+  @@index([clientId])
+  @@index([tailorId])
+  @@map("orders")
+}
+
+model OrderEvent {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now())
+
+  @@index([orderId])
+  @@map("order_events")
 }
