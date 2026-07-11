@@ -1,9 +1,16 @@
+import { PAYMENT_STATUSES } from '@moodly/shared';
+import { Prisma } from '@prisma/client';
 import { Router } from 'express';
 import { z } from 'zod';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
-import { assertTailor, getOwnedOrder, publicUserSelect } from './orders.service.js';
+import {
+  assertTailor,
+  getOwnedOrder,
+  publicUserSelect,
+  snapshotFromRecord,
+} from './orders.service.js';
 
 export const ordersRouter = Router();
 
@@ -72,4 +79,33 @@ ordersRouter.get('/:id', async (req, res) => {
     },
   });
   res.json({ order });
+});
+
+const patchSchema = z
+  .object({
+    agreedPrice: z.number().int().min(0).optional(),
+    estimatedDelivery: z.coerce.date().optional(),
+    paymentStatus: z.enum(PAYMENT_STATUSES).optional(),
+    clientRecordId: z.string().min(1).optional(),
+  })
+  .refine((d) => Object.keys(d).length > 0, { message: 'Aucune donnée à modifier.' });
+
+ordersRouter.patch('/:id', requireRole('TAILLEUR'), async (req, res) => {
+  const order = await getOwnedOrder(req.user!.sub, req.params.id as string);
+  if (order.tailorId !== req.user!.sub) {
+    throw new ApiError(404, 'INTROUVABLE', 'Commande introuvable.');
+  }
+  const parsed = patchSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new ApiError(400, 'DONNEES_INVALIDES', parsed.error.issues[0].message);
+  }
+  const data: Prisma.OrderUncheckedUpdateInput = { ...parsed.data };
+  if (parsed.data.clientRecordId) {
+    const snapshot = await snapshotFromRecord(req.user!.sub, parsed.data.clientRecordId);
+    if (snapshot) {
+      data.measurementsSnapshot = snapshot;
+    }
+  }
+  const updated = await prisma.order.update({ where: { id: order.id }, data });
+  res.json({ order: updated });
 });

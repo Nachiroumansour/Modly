@@ -96,3 +96,36 @@ describe('GET /orders/:id', () => {
     expect((await request(app).get(`/orders/${created.body.order.id}`).set(auth(autre.token))).status).toBe(404);
   });
 });
+
+describe('PATCH /orders/:id (tailleur)', () => {
+  it('fixe le prix, le paiement et fige le snapshot des mesures via la fiche', async () => {
+    const created = await request(app).post('/orders').set(auth(clientToken)).send({ tailorId, designId });
+    const id = created.body.order.id;
+
+    const rec = await request(app).post('/client-records').set(auth(tailorToken)).send({ name: 'Client cmd' });
+    const recordId = rec.body.record.id;
+    await request(app).post(`/client-records/${recordId}/measurements`).set(auth(tailorToken)).send({ tourPoitrine: 100 });
+
+    const res = await request(app)
+      .patch(`/orders/${id}`)
+      .set(auth(tailorToken))
+      .send({ agreedPrice: 25000, paymentStatus: 'ACOMPTE', clientRecordId: recordId });
+    expect(res.status).toBe(200);
+    expect(res.body.order.agreedPrice).toBe(25000);
+    expect(res.body.order.paymentStatus).toBe('ACOMPTE');
+    expect(res.body.order.measurementsSnapshot.tourPoitrine).toBe(100);
+  });
+
+  it('refuse le client (403) et la commande d’un autre tailleur (404)', async () => {
+    const created = await request(app).post('/orders').set(auth(clientToken)).send({ tailorId });
+    const id = created.body.order.id;
+    expect((await request(app).patch(`/orders/${id}`).set(auth(clientToken)).send({ agreedPrice: 1 })).status).toBe(403);
+    const autre = await registerUser(app, 'TAILLEUR', '+221770008010');
+    expect((await request(app).patch(`/orders/${id}`).set(auth(autre.token)).send({ agreedPrice: 1 })).status).toBe(404);
+  });
+
+  it('refuse un corps vide (400)', async () => {
+    const created = await request(app).post('/orders').set(auth(clientToken)).send({ tailorId });
+    expect((await request(app).patch(`/orders/${created.body.order.id}`).set(auth(tailorToken)).send({})).status).toBe(400);
+  });
+});
