@@ -5,6 +5,7 @@ import { errorHandler } from './lib/errors.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { clientRecordsRouter } from './modules/client-records/client-records.routes.js';
 import { designsRouter } from './modules/designs/designs.routes.js';
+import { ordersRouter } from './modules/orders/orders.routes.js';
 import { tailorsRouter } from './modules/tailors/tailors.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 
@@ -26,6 +27,7 @@ export function createApp() {
   app.use('/designs', designsRouter);
   app.use('/tailors', tailorsRouter);
   app.use('/client-records', clientRecordsRouter);
+  app.use('/orders', ordersRouter);
 
   app.use((_req, res) => {
     res.status(404).json({
