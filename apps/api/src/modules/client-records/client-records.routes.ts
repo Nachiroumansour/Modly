@@ -1,0 +1,41 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { ApiError } from '../../lib/errors.js';
+import { prisma } from '../../lib/prisma.js';
+import { requireAuth, requireRole } from '../../middleware/auth.js';
+import { assertLinkedClient } from './client-records.service.js';
+
+export const clientRecordsRouter = Router();
+
+// Toutes les routes : tailleur authentifié.
+clientRecordsRouter.use(requireAuth, requireRole('TAILLEUR'));
+
+const createSchema = z.object({
+  name: z.string().min(1, 'Le nom du client est requis.').max(120),
+  phone: z.string().min(4).max(30).optional(),
+  userId: z.string().min(1).optional(),
+  stylePref: z.string().max(200).optional(),
+  tissuPref: z.string().max(200).optional(),
+  coupePref: z.string().max(200).optional(),
+  notes: z.string().max(2000).optional(),
+});
+
+clientRecordsRouter.post('/', async (req, res) => {
+  const parsed = createSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new ApiError(400, 'DONNEES_INVALIDES', parsed.error.issues[0].message);
+  }
+  await assertLinkedClient(parsed.data.userId);
+  const record = await prisma.clientRecord.create({
+    data: { ...parsed.data, tailorId: req.user!.sub },
+  });
+  res.status(201).json({ record });
+});
+
+clientRecordsRouter.get('/', async (req, res) => {
+  const records = await prisma.clientRecord.findMany({
+    where: { tailorId: req.user!.sub },
+    orderBy: { updatedAt: 'desc' },
+  });
+  res.json({ records });
+});
