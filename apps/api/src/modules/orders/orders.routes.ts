@@ -1,4 +1,4 @@
-import { PAYMENT_STATUSES } from '@moodly/shared';
+import { ORDER_STATUSES, PAYMENT_STATUSES } from '@moodly/shared';
 import { Prisma } from '@prisma/client';
 import { Router } from 'express';
 import { z } from 'zod';
@@ -7,6 +7,7 @@ import { prisma } from '../../lib/prisma.js';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
 import {
   assertTailor,
+  assertTransition,
   getOwnedOrder,
   publicUserSelect,
   snapshotFromRecord,
@@ -108,4 +109,32 @@ ordersRouter.patch('/:id', requireRole('TAILLEUR'), async (req, res) => {
   }
   const updated = await prisma.order.update({ where: { id: order.id }, data });
   res.json({ order: updated });
+});
+
+const statusSchema = z.object({
+  status: z.enum(ORDER_STATUSES),
+  note: z.string().max(500).optional(),
+});
+
+ordersRouter.patch('/:id/status', requireRole('TAILLEUR'), async (req, res) => {
+  const order = await getOwnedOrder(req.user!.sub, req.params.id as string);
+  if (order.tailorId !== req.user!.sub) {
+    throw new ApiError(404, 'INTROUVABLE', 'Commande introuvable.');
+  }
+  const parsed = statusSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new ApiError(400, 'DONNEES_INVALIDES', parsed.error.issues[0].message);
+  }
+  assertTransition(order.status, parsed.data.status);
+  const [updated] = await prisma.$transaction([
+    prisma.order.update({ where: { id: order.id }, data: { status: parsed.data.status } }),
+    prisma.orderEvent.create({
+      data: { orderId: order.id, status: parsed.data.status, note: parsed.data.note },
+    }),
+  ]);
+  const withEvents = await prisma.order.findUnique({
+    where: { id: updated.id },
+    include: { events: { orderBy: { createdAt: 'asc' } } },
+  });
+  res.json({ order: withEvents });
 });

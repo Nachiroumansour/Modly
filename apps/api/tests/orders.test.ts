@@ -129,3 +129,41 @@ describe('PATCH /orders/:id (tailleur)', () => {
     expect((await request(app).patch(`/orders/${created.body.order.id}`).set(auth(tailorToken)).send({})).status).toBe(400);
   });
 });
+
+describe('PATCH /orders/:id/status (machine à états)', () => {
+  async function newOrder() {
+    const c = await request(app).post('/orders').set(auth(clientToken)).send({ tailorId });
+    return c.body.order.id as string;
+  }
+
+  it('avance dans la chaîne et enregistre la timeline', async () => {
+    const id = await newOrder();
+    expect((await request(app).patch(`/orders/${id}/status`).set(auth(tailorToken)).send({ status: 'TISSU_RECU' })).status).toBe(200);
+    const r2 = await request(app).patch(`/orders/${id}/status`).set(auth(tailorToken)).send({ status: 'COUPE', note: 'Découpe faite' });
+    expect(r2.status).toBe(200);
+    expect(r2.body.order.status).toBe('COUPE');
+
+    const detail = await request(app).get(`/orders/${id}`).set(auth(clientToken));
+    // EN_ATTENTE (création) + TISSU_RECU + COUPE
+    expect(detail.body.order.events).toHaveLength(3);
+  });
+
+  it('refuse un recul (409)', async () => {
+    const id = await newOrder();
+    await request(app).patch(`/orders/${id}/status`).set(auth(tailorToken)).send({ status: 'COUPE' });
+    const back = await request(app).patch(`/orders/${id}/status`).set(auth(tailorToken)).send({ status: 'TISSU_RECU' });
+    expect(back.status).toBe(409);
+    expect(back.body.error.code).toBe('TRANSITION_INVALIDE');
+  });
+
+  it('permet d’annuler puis refuse toute transition ensuite', async () => {
+    const id = await newOrder();
+    expect((await request(app).patch(`/orders/${id}/status`).set(auth(tailorToken)).send({ status: 'ANNULEE' })).status).toBe(200);
+    expect((await request(app).patch(`/orders/${id}/status`).set(auth(tailorToken)).send({ status: 'COUPE' })).status).toBe(409);
+  });
+
+  it('refuse un client (403)', async () => {
+    const id = await newOrder();
+    expect((await request(app).patch(`/orders/${id}/status`).set(auth(clientToken)).send({ status: 'COUPE' })).status).toBe(403);
+  });
+});

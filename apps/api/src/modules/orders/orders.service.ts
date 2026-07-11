@@ -1,8 +1,22 @@
-import { MEASUREMENT_FIELDS } from '@moodly/shared';
+import { MEASUREMENT_FIELDS, ORDER_STATUSES, type OrderStatus } from '@moodly/shared';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 
 export const publicUserSelect = { id: true, name: true, avatarUrl: true } as const;
+
+// Ordre de production (sans ANNULEE, statut terminal transverse).
+const CHAINE = ORDER_STATUSES.filter((s) => s !== 'ANNULEE');
+
+/** Valide une transition de production : avance seule, annulation permise, terminaux verrouillés. */
+export function assertTransition(from: OrderStatus, to: OrderStatus): void {
+  if (from === 'LIVREE' || from === 'ANNULEE') {
+    throw new ApiError(409, 'TRANSITION_INVALIDE', 'Cette commande est terminée.');
+  }
+  if (to === 'ANNULEE') return; // annulation permise depuis tout statut non terminal
+  if (CHAINE.indexOf(to) <= CHAINE.indexOf(from)) {
+    throw new ApiError(409, 'TRANSITION_INVALIDE', 'On ne peut pas revenir en arrière.');
+  }
+}
 
 /**
  * Vérifie que la fiche appartient au tailleur et renvoie le snapshot (dernière mesure)
