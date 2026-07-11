@@ -1,0 +1,10 @@
+{
+  "name": "moodly",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "test": "npm test --workspaces --if-present",
+    "dev:api": "npm run dev -w apps/api"
+  }
+}

@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TAILLEUR
+  CLIENT
+}
+
+model User {
+  id            String         @id @default(cuid())
+  phone         String         @unique
+  passwordHash  String
+  name          String
+  role          Role
+  avatarUrl     String?
+  email         String?
+  createdAt     DateTime       @default(now())
+  tailorProfile TailorProfile?
+
+  @@map("users")
+}
+
+model TailorProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio             String?
+  location        String?
+  specialties     String[] @default([])
+  yearsExperience Int?
+  priceMin        Int?
+  priceMax        Int?
+  verified        Boolean  @default(false)
+
+  @@map("tailor_profiles")
+}
