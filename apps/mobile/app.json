@@ -19,6 +19,12 @@
           "backgroundColor": "#141414",
           "imageWidth": 220
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Moodly accède à tes photos pour publier tes modèles."
+        }
       ]
     ],
     "ios": {

@@ -49,3 +49,31 @@ export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promi
   }
   return data as T;
 }
+
+/** Envoi multipart (upload d'image). On laisse fetch poser le Content-Type + boundary. */
+export async function apiUpload<T>(
+  path: string,
+  form: FormData,
+  token?: string | null,
+): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  let res: Response;
+  try {
+    res = await fetch(API_URL + path, { method: 'POST', headers, body: form });
+  } catch {
+    throw new ApiClientError('RESEAU', 'Connexion impossible. Réessaie.');
+  }
+
+  const data = await res.json().catch(() => ({}) as unknown);
+  if (!res.ok) {
+    const err = (data as { error?: { code?: string; message?: string } }).error;
+    throw new ApiClientError(
+      err?.code ?? 'ERREUR',
+      err?.message ?? "L'envoi a échoué.",
+      res.status,
+    );
+  }
+  return data as T;
+}
