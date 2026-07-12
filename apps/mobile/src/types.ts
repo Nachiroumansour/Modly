@@ -1,4 +1,11 @@
-import type { DesignCategory, OrderStatus, PaymentStatus, Role } from '@moodly/shared';
+import type {
+  DesignCategory,
+  MeasurementKey,
+  MeasurementSource,
+  OrderStatus,
+  PaymentStatus,
+  Role,
+} from '@moodly/shared';
 
 export type ApiUser = {
   id: string;
@@ -81,3 +88,22 @@ export type OrderDetail = Order & {
   measurementsSnapshot: Record<string, number> | null;
   events: OrderEvent[];
 };
+
+export type ClientRecord = {
+  id: string;
+  name: string;
+  phone: string | null;
+  stylePref: string | null;
+  tissuPref: string | null;
+  coupePref: string | null;
+  notes: string | null;
+  userId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Measurement = {
+  id: string;
+  source: MeasurementSource;
+  createdAt: string;
+} & Partial<Record<MeasurementKey, number | null>>;
