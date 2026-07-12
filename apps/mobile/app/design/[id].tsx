@@ -10,6 +10,7 @@ export default function DesignDetail() {
       onBack={() => router.back()}
       onRequireAuth={() => router.push('/(auth)/register')}
       onOrder={() => router.push(`/order/create?designId=${id}`)}
+      onTailor={(tailorId) => router.push(`/tailor/${tailorId}`)}
     />
   );
 }

@@ -24,9 +24,10 @@ type Props = {
   onRequireAuth?: () => void;
   onBack?: () => void;
   onOrder?: () => void;
+  onTailor?: (tailorId: string) => void;
 };
 
-export function DesignScreen({ id, onRequireAuth, onBack, onOrder }: Props) {
+export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { design, comments, isLoading, isError, refetch } = useDesign(id);
@@ -68,7 +69,9 @@ export function DesignScreen({ id, onRequireAuth, onBack, onOrder }: Props) {
 
         <View style={styles.body}>
           <Text style={styles.title}>{design.title}</Text>
-          <Text style={styles.tailor}>par {design.tailor.name}</Text>
+          <Pressable onPress={() => onTailor?.(design.tailor.id)}>
+            <Text style={styles.tailor}>par {design.tailor.name} ›</Text>
+          </Pressable>
           {design.description ? <Text style={styles.description}>{design.description}</Text> : null}
 
           <View style={styles.stats}>
