@@ -64,3 +64,21 @@ usersRouter.patch('/me/profile', requireAuth, requireRole('TAILLEUR'), async (re
   });
   res.json({ profile });
 });
+
+usersRouter.get('/me/measurements', requireAuth, requireRole('CLIENT'), async (req, res) => {
+  const records = await prisma.clientRecord.findMany({
+    where: { userId: req.user!.sub },
+    orderBy: { updatedAt: 'desc' },
+    include: {
+      tailor: { select: { id: true, name: true, avatarUrl: true } },
+      measurements: { orderBy: { createdAt: 'desc' }, take: 1 },
+    },
+  });
+  res.json({
+    records: records.map((r) => ({
+      id: r.id,
+      tailor: r.tailor,
+      latestMeasurement: r.measurements[0] ?? null,
+    })),
+  });
+});

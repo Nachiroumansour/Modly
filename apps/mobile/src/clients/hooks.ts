@@ -2,7 +2,29 @@ import type { MeasurementKey, MeasurementSource } from '@moodly/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../auth/AuthContext';
 import { apiFetch } from '../lib/api';
-import type { ClientRecord, Measurement } from '../types';
+import type { ApiUser, ClientRecord, Measurement } from '../types';
+
+export type LinkedMeasurement = {
+  id: string;
+  tailor: ApiUser;
+  latestMeasurement: Measurement | null;
+};
+
+/** Les mesures des fiches liées au compte du client connecté. */
+export function useMyMeasurements() {
+  const { token } = useAuth();
+  const q = useQuery({
+    queryKey: ['myMeasurements'],
+    enabled: Boolean(token),
+    queryFn: () => apiFetch<{ records: LinkedMeasurement[] }>('/me/measurements', { token }),
+  });
+  return {
+    records: q.data?.records ?? [],
+    isLoading: q.isLoading,
+    isError: q.isError,
+    refetch: () => q.refetch(),
+  };
+}
 
 export function useClientRecords() {
   const { token } = useAuth();

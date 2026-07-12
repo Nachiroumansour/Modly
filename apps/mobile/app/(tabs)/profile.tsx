@@ -52,7 +52,7 @@ export default function ProfileTab() {
         {user.role === 'TAILLEUR' ? (
           <Row icon="grid" label="Ma boutique" soon />
         ) : (
-          <Row icon="sliders" label="Mes mesures" soon />
+          <Row icon="sliders" label="Mes mesures" onPress={() => router.push('/my-measurements')} />
         )}
         <Row icon="bell" label="Notifications" soon />
         <Row icon="help-circle" label="Aide" soon />
@@ -66,16 +66,26 @@ export default function ProfileTab() {
   );
 }
 
-function Row({ icon, label, soon }: { icon: FeatherName; label: string; soon?: boolean }) {
+function Row({
+  icon,
+  label,
+  soon,
+  onPress,
+}: {
+  icon: FeatherName;
+  label: string;
+  soon?: boolean;
+  onPress?: () => void;
+}) {
   return (
-    <View style={styles.row}>
+    <Pressable style={styles.row} onPress={onPress} disabled={!onPress}>
       <View style={styles.rowIcon}>
         <Feather name={icon} size={18} color={colors.textOnDark} />
       </View>
       <Text style={styles.rowLabel}>{label}</Text>
-      {soon && <Text style={styles.soon}>Bientôt</Text>}
+      {soon ? <Text style={styles.soon}>Bientôt</Text> : null}
       <Feather name="chevron-right" size={18} color={colors.textOnDarkMuted} />
-    </View>
+    </Pressable>
   );
 }
 
