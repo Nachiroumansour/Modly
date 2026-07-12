@@ -6,7 +6,7 @@ import { useAuth } from '../../src/auth/AuthContext';
 import { ApiClientError } from '../../src/lib/api';
 import { Button } from '../../src/ui/Button';
 import { TextField } from '../../src/ui/TextField';
-import { colors, radius, spacing, typography } from '../../src/theme';
+import { colors, fonts, radius, spacing } from '../../src/theme';
 
 export default function Register() {
   const router = useRouter();
@@ -79,8 +79,8 @@ function RoleCard({ label, active, onPress }: { label: string; active: boolean; 
 
 const styles = StyleSheet.create({
   container: { padding: spacing.xl, paddingTop: spacing.xxl * 2, backgroundColor: colors.ink, flexGrow: 1 },
-  title: { color: colors.textOnDark, fontSize: typography.display.fontSize, fontWeight: '800' },
-  subtitle: { color: colors.textOnDarkMuted, fontSize: typography.body.fontSize, marginTop: spacing.sm, marginBottom: spacing.xl },
+  title: { color: colors.textOnDark, fontFamily: fonts.displayBold, fontSize: 34 },
+  subtitle: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyRegular, fontSize: 16, marginTop: spacing.sm, marginBottom: spacing.xl },
   roleRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.xl },
   roleCard: {
     flex: 1,
@@ -93,9 +93,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   roleCardActive: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
-  roleText: { color: colors.textOnDarkMuted, fontWeight: '700', fontSize: typography.label.fontSize },
+  roleText: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyBold, fontSize: 15 },
   roleTextActive: { color: colors.accent },
-  error: { color: colors.accent, marginBottom: spacing.md, fontWeight: '600' },
+  error: { color: colors.accent, marginBottom: spacing.md, fontFamily: fonts.bodyBold },
   link: { marginTop: spacing.xl, alignSelf: 'center' },
-  linkText: { color: colors.textOnDarkMuted, fontWeight: '600' },
+  linkText: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyBold },
 });

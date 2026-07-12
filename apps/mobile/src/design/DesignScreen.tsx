@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import {
   ActivityIndicator,
@@ -8,10 +9,12 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, fonts, radius, spacing } from '../theme';
 import { Button } from '../ui/Button';
 import { ErrorRetry } from '../ui/ErrorRetry';
 import { useDesign } from './useDesign';
+
+type FeatherName = keyof typeof Feather.glyphMap;
 
 type Props = {
   id: string;
@@ -41,7 +44,7 @@ export function DesignScreen({ id, onRequireAuth, onBack }: Props) {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 96 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
         <Image
           source={{ uri: design.imageUrl }}
           style={[styles.image, { aspectRatio: design.imageWidth / design.imageHeight }]}
@@ -49,29 +52,25 @@ export function DesignScreen({ id, onRequireAuth, onBack }: Props) {
           transition={200}
         />
         {onBack && (
-          <Pressable onPress={onBack} style={[styles.back, { top: insets.top + spacing.md }]}>
-            <Text style={styles.backText}>‹</Text>
+          <Pressable onPress={onBack} style={[styles.back, { top: insets.top + spacing.sm }]} hitSlop={10}>
+            <Feather name="chevron-left" size={26} color={colors.textOnDark} />
           </Pressable>
         )}
 
         <View style={styles.body}>
           <Text style={styles.title}>{design.title}</Text>
-          <Text style={styles.tailor}>{design.tailor.name}</Text>
-          {design.description && <Text style={styles.description}>{design.description}</Text>}
+          <Text style={styles.tailor}>par {design.tailor.name}</Text>
+          {design.description ? <Text style={styles.description}>{design.description}</Text> : null}
 
           <View style={styles.stats}>
-            <Stat value={design.likesCount} label="J'aime" />
-            <Stat value={design.commentsCount} label="Commentaires" />
-            <Stat value={design.bookmarksCount} label="Sauvegardes" />
+            <Stat icon="heart" value={design.likesCount} />
+            <Stat icon="message-circle" value={design.commentsCount} />
+            <Stat icon="bookmark" value={design.bookmarksCount} />
           </View>
 
           <View style={styles.actions}>
-            <Pressable style={styles.actionGhost} onPress={onRequireAuth}>
-              <Text style={styles.actionGhostText}>♥  J'aime</Text>
-            </Pressable>
-            <Pressable style={styles.actionGhost} onPress={onRequireAuth}>
-              <Text style={styles.actionGhostText}>◎  Sauvegarder</Text>
-            </Pressable>
+            <ActionGhost icon="heart" label="J'aime" onPress={onRequireAuth} />
+            <ActionGhost icon="bookmark" label="Sauvegarder" onPress={onRequireAuth} />
           </View>
 
           <Text style={styles.sectionTitle}>Commentaires</Text>
@@ -95,12 +94,21 @@ export function DesignScreen({ id, onRequireAuth, onBack }: Props) {
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
+function Stat({ icon, value }: { icon: FeatherName; value: number }) {
   return (
     <View style={styles.stat}>
+      <Feather name={icon} size={16} color={colors.textOnDarkMuted} />
       <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
     </View>
+  );
+}
+
+function ActionGhost({ icon, label, onPress }: { icon: FeatherName; label: string; onPress?: () => void }) {
+  return (
+    <Pressable style={styles.actionGhost} onPress={onPress}>
+      <Feather name={icon} size={18} color={colors.textOnDark} />
+      <Text style={styles.actionGhostText}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -114,35 +122,47 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backText: { color: colors.textOnDark, fontSize: 28, lineHeight: 30, fontWeight: '700' },
   body: { padding: spacing.xl },
-  title: { color: colors.textOnDark, fontSize: typography.title.fontSize, fontWeight: '800' },
-  tailor: { color: colors.accent, fontSize: typography.label.fontSize, fontWeight: '600', marginTop: spacing.xs },
-  description: { color: colors.textOnDarkMuted, fontSize: typography.body.fontSize, marginTop: spacing.md },
+  title: { color: colors.textOnDark, fontFamily: fonts.displayBold, fontSize: 28, lineHeight: 32 },
+  tailor: { color: colors.accent, fontFamily: fonts.bodyBold, fontSize: 15, marginTop: spacing.xs },
+  description: {
+    color: colors.textOnDarkMuted,
+    fontFamily: fonts.bodyRegular,
+    fontSize: 16,
+    lineHeight: 24,
+    marginTop: spacing.md,
+  },
   stats: { flexDirection: 'row', gap: spacing.xl, marginTop: spacing.xl },
-  stat: {},
-  statValue: { color: colors.textOnDark, fontSize: typography.title.fontSize, fontWeight: '800' },
-  statLabel: { color: colors.textOnDarkMuted, fontSize: typography.caption.fontSize, marginTop: 2 },
+  stat: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  statValue: { color: colors.textOnDark, fontFamily: fonts.bodyBold, fontSize: 15 },
   actions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl },
   actionGhost: {
     flex: 1,
-    height: 48,
+    height: 50,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.inkElevated,
+    borderColor: colors.inkLine,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
   },
-  actionGhostText: { color: colors.textOnDark, fontWeight: '600' },
-  sectionTitle: { color: colors.textOnDark, fontSize: typography.label.fontSize, fontWeight: '700', marginTop: spacing.xxl, marginBottom: spacing.md },
-  noComments: { color: colors.textOnDarkMuted },
+  actionGhostText: { color: colors.textOnDark, fontFamily: fonts.bodyBold, fontSize: 14 },
+  sectionTitle: {
+    color: colors.textOnDark,
+    fontFamily: fonts.bodyHeavy,
+    fontSize: 16,
+    marginTop: spacing.xxl,
+    marginBottom: spacing.md,
+  },
+  noComments: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyRegular },
   comment: { marginBottom: spacing.lg },
-  commentAuthor: { color: colors.textOnDark, fontWeight: '700', fontSize: typography.caption.fontSize },
-  commentText: { color: colors.textOnDarkMuted, marginTop: 2 },
+  commentAuthor: { color: colors.textOnDark, fontFamily: fonts.bodyBold, fontSize: 13 },
+  commentText: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyRegular, marginTop: 2 },
   cta: {
     position: 'absolute',
     left: 0,
@@ -152,6 +172,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     backgroundColor: colors.ink,
     borderTopWidth: 1,
-    borderTopColor: colors.inkElevated,
+    borderTopColor: colors.inkLine,
   },
 });

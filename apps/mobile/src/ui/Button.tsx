@@ -6,7 +6,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, fonts, radius, spacing } from '../theme';
 
 type Props = {
   label: string;
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   ghost: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border },
   disabled: { opacity: 0.5 },
   pressed: { opacity: 0.85 },
-  label: { fontSize: typography.label.fontSize, fontWeight: '700' },
+  label: { fontFamily: fonts.bodyBold, fontSize: 16 },
   labelPrimary: { color: colors.textOnDark },
   labelGhost: { color: colors.textPrimary },
 });

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, fonts, radius, spacing } from '../theme';
 
 type Props = TextInputProps & {
   label: string;
@@ -22,18 +22,19 @@ const styles = StyleSheet.create({
   wrap: { marginBottom: spacing.lg },
   label: {
     color: colors.textOnDarkMuted,
-    fontSize: typography.caption.fontSize,
-    fontWeight: '600',
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
     marginBottom: spacing.sm,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   input: {
-    height: 52,
+    height: 54,
     borderRadius: radius.md,
     backgroundColor: colors.inkElevated,
     color: colors.textOnDark,
     paddingHorizontal: spacing.lg,
-    fontSize: typography.body.fontSize,
+    fontFamily: fonts.body,
+    fontSize: 16,
   },
 });

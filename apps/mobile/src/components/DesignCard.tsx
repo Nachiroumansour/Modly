@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, fonts, radius, spacing } from '../theme';
 import type { Design } from '../types';
 
 type Props = {
@@ -41,6 +41,6 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.9 },
   image: { width: '100%', backgroundColor: colors.border },
   meta: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  title: { color: colors.textPrimary, fontSize: typography.label.fontSize, fontWeight: '700' },
-  tailor: { color: colors.textSecondary, fontSize: typography.caption.fontSize, marginTop: 2 },
+  title: { color: colors.textPrimary, fontFamily: fonts.bodyBold, fontSize: 14 },
+  tailor: { color: colors.textSecondary, fontFamily: fonts.body, fontSize: 12, marginTop: 2 },
 });

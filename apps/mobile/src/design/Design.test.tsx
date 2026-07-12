@@ -49,7 +49,7 @@ describe('DesignScreen', () => {
     );
     render(<DesignScreen id="d1" />);
     expect(screen.getByText('Ensemble Korité')).toBeTruthy();
-    expect(screen.getByText('Atelier Awa')).toBeTruthy();
+    expect(screen.getByText(/Atelier Awa/)).toBeTruthy();
     expect(screen.getByText('12')).toBeTruthy();
     expect(screen.getByText('Magnifique !')).toBeTruthy();
   });

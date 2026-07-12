@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DesignCard } from '../components/DesignCard';
-import { colors, spacing, typography } from '../theme';
+import { colors, fonts, spacing } from '../theme';
 import type { Design } from '../types';
 import { ErrorRetry } from '../ui/ErrorRetry';
 import { useFeed } from './useFeed';
@@ -94,13 +94,13 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing.md, paddingBottom: spacing.xxl },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   brand: {
-    fontSize: typography.display.fontSize,
-    fontWeight: '800',
+    fontFamily: fonts.displayBold,
+    fontSize: 32,
     color: colors.textPrimary,
     marginBottom: spacing.lg,
   },
   columns: { flexDirection: 'row', gap: spacing.md },
   column: { flex: 1 },
-  empty: { color: colors.textSecondary, fontSize: typography.body.fontSize, marginTop: spacing.xxl, textAlign: 'center' },
+  empty: { color: colors.textSecondary, fontFamily: fonts.body, fontSize: 16, marginTop: spacing.xxl, textAlign: 'center' },
   more: { marginVertical: spacing.lg },
 });

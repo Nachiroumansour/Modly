@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, spacing, typography } from '../theme';
+import { colors, fonts, spacing } from '../theme';
 import { Button } from './Button';
 
 type Props = {
@@ -21,6 +21,6 @@ export function ErrorRetry({ message, onRetry, dark }: Props) {
 
 const styles = StyleSheet.create({
   wrap: { padding: spacing.xl, alignItems: 'center', justifyContent: 'center', gap: spacing.lg },
-  text: { color: colors.textSecondary, fontSize: typography.body.fontSize, textAlign: 'center' },
+  text: { color: colors.textSecondary, fontFamily: fonts.body, fontSize: 16, textAlign: 'center' },
   textDark: { color: colors.textOnDarkMuted },
 });

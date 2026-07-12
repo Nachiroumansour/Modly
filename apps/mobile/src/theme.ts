@@ -1,32 +1,39 @@
 /**
- * Design system Moodly — simple, premium, épuré.
- * Identité couleur resserrée : neutres + UNE seule couleur d'accent (terracotta,
- * clin d'œil aux textiles africains). Toujours passer par ces tokens, jamais de
- * couleur en dur dispersée dans les écrans.
+ * Design system Moodly — premium, épuré, éditorial (pas de look générique).
+ * Neutres CHAUDS (noir chaud + ivoire) + une seule couleur d'accent terracotta.
+ * Typo à caractère : Fraunces (serif éditoriale) pour la marque/titres, Manrope (grotesque) pour l'UI.
+ * Toujours passer par ces tokens — jamais de couleur/police en dur ailleurs.
  */
 
 export const colors = {
-  // Accent unique — identité de la marque.
-  accent: '#C65D3B',
-  accentSoft: '#F4E5DD',
+  // Accent unique — terracotta profond, maîtrisé.
+  accent: '#BF572E',
+  accentSoft: '#F0E1D6',
 
-  // Neutres — fond sombre (écrans immersifs façon TikTok) et clair (home Pinterest).
-  ink: '#141414',
-  inkElevated: '#1F1F1F',
-  surface: '#FFFFFF',
-  surfaceWarm: '#FAF8F5',
+  // Neutres chauds — fonds sombre (écrans immersifs) et clair (home).
+  ink: '#17120F',
+  inkElevated: '#241C17',
+  inkLine: '#33291F',
+  surface: '#F6F1E9',
+  surfaceWarm: '#FBF7F0',
 
   // Texte.
-  textPrimary: '#141414',
-  textSecondary: '#6B6B6B',
-  textOnDark: '#FFFFFF',
-  textOnDarkMuted: '#B4B0AB',
+  textPrimary: '#1E1712',
+  textSecondary: '#7A6E63',
+  textOnDark: '#F6F1E9',
+  textOnDarkMuted: '#A99C8E',
 
-  // Traits & séparateurs.
-  border: '#ECE9E4',
+  border: '#E7DED2',
+  danger: '#B23F2E',
+} as const;
 
-  // États.
-  danger: '#C6483B',
+export const fonts = {
+  display: 'Fraunces_600SemiBold',
+  displayBold: 'Fraunces_700Bold',
+  body: 'Manrope_500Medium',
+  bodyRegular: 'Manrope_400Regular',
+  bodyBold: 'Manrope_700Bold',
+  bodyHeavy: 'Manrope_800ExtraBold',
 } as const;
 
 export const spacing = {
@@ -39,19 +46,21 @@ export const spacing = {
 } as const;
 
 export const radius = {
-  sm: 8,
-  md: 14,
-  lg: 22,
+  sm: 10,
+  md: 16,
+  lg: 24,
   pill: 999,
 } as const;
 
+/** Rôles typographiques : la fontFamily porte déjà la graisse (ne pas cumuler fontWeight). */
 export const typography = {
-  display: { fontSize: 34, fontWeight: '800' },
-  title: { fontSize: 22, fontWeight: '700' },
-  body: { fontSize: 16, fontWeight: '500' },
-  label: { fontSize: 14, fontWeight: '600' },
-  caption: { fontSize: 12, fontWeight: '500' },
+  display: { fontFamily: fonts.displayBold, fontSize: 34 },
+  title: { fontFamily: fonts.display, fontSize: 24 },
+  heading: { fontFamily: fonts.bodyHeavy, fontSize: 18 },
+  body: { fontFamily: fonts.bodyRegular, fontSize: 16 },
+  label: { fontFamily: fonts.bodyBold, fontSize: 14 },
+  caption: { fontFamily: fonts.body, fontSize: 12 },
 } as const;
 
-export const theme = { colors, spacing, radius, typography } as const;
+export const theme = { colors, fonts, spacing, radius, typography } as const;
 export type Theme = typeof theme;

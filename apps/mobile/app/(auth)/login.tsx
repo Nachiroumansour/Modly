@@ -5,7 +5,7 @@ import { useAuth } from '../../src/auth/AuthContext';
 import { ApiClientError } from '../../src/lib/api';
 import { Button } from '../../src/ui/Button';
 import { TextField } from '../../src/ui/TextField';
-import { colors, spacing, typography } from '../../src/theme';
+import { colors, fonts, spacing } from '../../src/theme';
 
 export default function Login() {
   const router = useRouter();
@@ -62,14 +62,15 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   container: { padding: spacing.xl, paddingTop: spacing.xxl * 2, backgroundColor: colors.ink, flexGrow: 1 },
-  title: { color: colors.textOnDark, fontSize: typography.display.fontSize, fontWeight: '800' },
+  title: { color: colors.textOnDark, fontFamily: fonts.displayBold, fontSize: 34 },
   subtitle: {
     color: colors.textOnDarkMuted,
-    fontSize: typography.body.fontSize,
+    fontFamily: fonts.bodyRegular,
+    fontSize: 16,
     marginTop: spacing.sm,
     marginBottom: spacing.xl,
   },
-  error: { color: colors.accent, marginBottom: spacing.md, fontWeight: '600' },
+  error: { color: colors.accent, marginBottom: spacing.md, fontFamily: fonts.bodyBold },
   link: { marginTop: spacing.xl, alignSelf: 'center' },
-  linkText: { color: colors.textOnDarkMuted, fontWeight: '600' },
+  linkText: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyBold },
 });
