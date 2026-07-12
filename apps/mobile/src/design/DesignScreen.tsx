@@ -2,17 +2,21 @@ import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '../auth/AuthContext';
 import { colors, fonts, radius, spacing } from '../theme';
 import { Button } from '../ui/Button';
 import { ErrorRetry } from '../ui/ErrorRetry';
 import { useDesign } from './useDesign';
+import { useDesignActions } from './useDesignActions';
 
 type FeatherName = keyof typeof Feather.glyphMap;
 
@@ -24,7 +28,10 @@ type Props = {
 
 export function DesignScreen({ id, onRequireAuth, onBack }: Props) {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const { design, comments, isLoading, isError, refetch } = useDesign(id);
+  const actions = useDesignActions(id);
+  const authed = Boolean(user);
 
   if (isLoading) {
     return (
@@ -42,6 +49,8 @@ export function DesignScreen({ id, onRequireAuth, onBack }: Props) {
     );
   }
 
+  const gate = onRequireAuth ?? (() => {});
+
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
@@ -51,11 +60,11 @@ export function DesignScreen({ id, onRequireAuth, onBack }: Props) {
           contentFit="cover"
           transition={200}
         />
-        {onBack && (
+        {onBack ? (
           <Pressable onPress={onBack} style={[styles.back, { top: insets.top + spacing.sm }]} hitSlop={10}>
             <Feather name="chevron-left" size={26} color={colors.textOnDark} />
           </Pressable>
-        )}
+        ) : null}
 
         <View style={styles.body}>
           <Text style={styles.title}>{design.title}</Text>
@@ -69,11 +78,46 @@ export function DesignScreen({ id, onRequireAuth, onBack }: Props) {
           </View>
 
           <View style={styles.actions}>
-            <ActionGhost icon="heart" label="J'aime" onPress={onRequireAuth} />
-            <ActionGhost icon="bookmark" label="Sauvegarder" onPress={onRequireAuth} />
+            <ActionGhost
+              icon="heart"
+              label={design.likedByMe ? 'Aimé' : "J'aime"}
+              active={design.likedByMe}
+              onPress={() => (authed ? actions.toggleLike(design.likedByMe) : gate())}
+            />
+            <ActionGhost
+              icon="bookmark"
+              label={design.bookmarkedByMe ? 'Sauvegardé' : 'Sauvegarder'}
+              active={design.bookmarkedByMe}
+              onPress={() => (authed ? actions.toggleBookmark(design.bookmarkedByMe) : gate())}
+            />
           </View>
 
           <Text style={styles.sectionTitle}>Commentaires</Text>
+
+          {authed ? (
+            <View style={styles.commentBox}>
+              <TextInput
+                value={actions.commentText}
+                onChangeText={actions.setCommentText}
+                placeholder="Écris un commentaire…"
+                placeholderTextColor={colors.textOnDarkMuted}
+                style={styles.commentInput}
+                multiline
+              />
+              <Pressable
+                onPress={actions.submitComment}
+                disabled={actions.commenting}
+                style={styles.send}
+              >
+                <Feather name="send" size={18} color={colors.textOnDark} />
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable onPress={gate} style={styles.commentGate}>
+              <Text style={styles.commentGateText}>Connecte-toi pour commenter</Text>
+            </Pressable>
+          )}
+
           {comments.length === 0 ? (
             <Text style={styles.noComments}>Sois le premier à commenter.</Text>
           ) : (
@@ -88,7 +132,14 @@ export function DesignScreen({ id, onRequireAuth, onBack }: Props) {
       </ScrollView>
 
       <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.md }]}>
-        <Button label="Commander ce modèle" onPress={() => onRequireAuth?.()} />
+        <Button
+          label="Commander ce modèle"
+          onPress={() =>
+            authed
+              ? Alert.alert('Bientôt', 'Le flux de commande arrive dans la prochaine mise à jour.')
+              : gate()
+          }
+        />
       </View>
     </View>
   );
@@ -103,11 +154,21 @@ function Stat({ icon, value }: { icon: FeatherName; value: number }) {
   );
 }
 
-function ActionGhost({ icon, label, onPress }: { icon: FeatherName; label: string; onPress?: () => void }) {
+function ActionGhost({
+  icon,
+  label,
+  active,
+  onPress,
+}: {
+  icon: FeatherName;
+  label: string;
+  active?: boolean;
+  onPress?: () => void;
+}) {
   return (
-    <Pressable style={styles.actionGhost} onPress={onPress}>
-      <Feather name={icon} size={18} color={colors.textOnDark} />
-      <Text style={styles.actionGhostText}>{label}</Text>
+    <Pressable style={[styles.actionGhost, active && styles.actionActive]} onPress={onPress}>
+      <Feather name={icon} size={18} color={active ? colors.accent : colors.textOnDark} />
+      <Text style={[styles.actionGhostText, active && styles.actionActiveText]}>{label}</Text>
     </Pressable>
   );
 }
@@ -151,7 +212,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
   },
+  actionActive: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
   actionGhostText: { color: colors.textOnDark, fontFamily: fonts.bodyBold, fontSize: 14 },
+  actionActiveText: { color: colors.accent },
   sectionTitle: {
     color: colors.textOnDark,
     fontFamily: fonts.bodyHeavy,
@@ -159,6 +222,41 @@ const styles = StyleSheet.create({
     marginTop: spacing.xxl,
     marginBottom: spacing.md,
   },
+  commentBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  commentInput: {
+    flex: 1,
+    minHeight: 46,
+    maxHeight: 120,
+    borderRadius: radius.md,
+    backgroundColor: colors.inkElevated,
+    color: colors.textOnDark,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    fontFamily: fonts.bodyRegular,
+    fontSize: 15,
+  },
+  send: {
+    width: 46,
+    height: 46,
+    borderRadius: radius.md,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  commentGate: {
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.inkLine,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  commentGateText: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyBold, fontSize: 14 },
   noComments: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyRegular },
   comment: { marginBottom: spacing.lg },
   commentAuthor: { color: colors.textOnDark, fontFamily: fonts.bodyBold, fontSize: 13 },

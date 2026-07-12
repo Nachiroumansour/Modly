@@ -4,6 +4,17 @@ import { useDesign } from './useDesign';
 import type { Design } from '../types';
 
 jest.mock('./useDesign');
+jest.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: null, token: null }) }));
+jest.mock('./useDesignActions', () => ({
+  useDesignActions: () => ({
+    toggleLike: jest.fn(),
+    toggleBookmark: jest.fn(),
+    commentText: '',
+    setCommentText: jest.fn(),
+    submitComment: jest.fn(),
+    commenting: false,
+  }),
+}));
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));

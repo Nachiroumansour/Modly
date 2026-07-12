@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import {
   ActivityIndicator,
   NativeScrollEvent,
@@ -9,23 +8,10 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DesignCard } from '../components/DesignCard';
 import { colors, fonts, spacing } from '../theme';
-import type { Design } from '../types';
 import { ErrorRetry } from '../ui/ErrorRetry';
+import { MasonryColumns } from './masonry';
 import { useFeed } from './useFeed';
-
-/** Répartit les modèles en 2 colonnes en équilibrant la hauteur (masonry Pinterest). */
-function splitColumns(designs: Design[]): [Design[], Design[]] {
-  const cols: [Design[], Design[]] = [[], []];
-  const heights = [0, 0];
-  for (const d of designs) {
-    const target = heights[0] <= heights[1] ? 0 : 1;
-    cols[target].push(d);
-    heights[target] += d.imageHeight / d.imageWidth;
-  }
-  return cols;
-}
 
 type FeedProps = {
   onOpenDesign?: (id: string) => void;
@@ -34,7 +20,6 @@ type FeedProps = {
 export function Feed({ onOpenDesign }: FeedProps = {}) {
   const insets = useSafeAreaInsets();
   const { designs, isLoading, isError, hasMore, refetch, loadMore } = useFeed();
-  const [left, right] = useMemo(() => splitColumns(designs), [designs]);
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
@@ -71,27 +56,16 @@ export function Feed({ onOpenDesign }: FeedProps = {}) {
       {designs.length === 0 ? (
         <Text style={styles.empty}>Aucun modèle pour l'instant.</Text>
       ) : (
-        <View style={styles.columns}>
-          <View style={styles.column}>
-            {left.map((d) => (
-              <DesignCard key={d.id} design={d} onPress={() => onOpenDesign?.(d.id)} />
-            ))}
-          </View>
-          <View style={styles.column}>
-            {right.map((d) => (
-              <DesignCard key={d.id} design={d} onPress={() => onOpenDesign?.(d.id)} />
-            ))}
-          </View>
-        </View>
+        <MasonryColumns designs={designs} onOpen={(id) => onOpenDesign?.(id)} />
       )}
-      {hasMore && <ActivityIndicator style={styles.more} color={colors.accent} />}
+      {hasMore ? <ActivityIndicator style={styles.more} color={colors.accent} /> : null}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.surface },
-  content: { paddingHorizontal: spacing.md, paddingBottom: spacing.xxl },
+  content: { paddingHorizontal: spacing.md, paddingBottom: 110 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   brand: {
     fontFamily: fonts.displayBold,
@@ -99,8 +73,12 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginBottom: spacing.lg,
   },
-  columns: { flexDirection: 'row', gap: spacing.md },
-  column: { flex: 1 },
-  empty: { color: colors.textSecondary, fontFamily: fonts.body, fontSize: 16, marginTop: spacing.xxl, textAlign: 'center' },
+  empty: {
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: 16,
+    marginTop: spacing.xxl,
+    textAlign: 'center',
+  },
   more: { marginVertical: spacing.lg },
 });

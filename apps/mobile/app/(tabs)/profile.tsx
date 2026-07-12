@@ -35,7 +35,7 @@ export default function ProfileTab() {
   const roleLabel = user.role === 'TAILLEUR' ? 'Tailleur' : 'Client';
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={{ paddingTop: insets.top + spacing.xl, paddingBottom: spacing.xxl }}>
+    <ScrollView style={styles.root} contentContainerStyle={{ paddingTop: insets.top + spacing.xl, paddingBottom: 110 }}>
       <View style={styles.header}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initial}</Text>

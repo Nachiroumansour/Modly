@@ -9,6 +9,7 @@
     "@moodly/shared": "*",
     "@tanstack/react-query": "^5.101.2",
     "expo": "^54.0.35",
+    "expo-blur": "~15.0.8",
     "expo-constants": "~18.0.13",
     "expo-font": "^57.0.0",
     "expo-image": "~3.0.11",
