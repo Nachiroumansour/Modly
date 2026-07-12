@@ -9,6 +9,7 @@ export default function DesignDetail() {
       id={id}
       onBack={() => router.back()}
       onRequireAuth={() => router.push('/(auth)/register')}
+      onOrder={() => router.push(`/order/create?designId=${id}`)}
     />
   );
 }

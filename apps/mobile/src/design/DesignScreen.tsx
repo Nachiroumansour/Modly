@@ -2,7 +2,6 @@ import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -24,9 +23,10 @@ type Props = {
   id: string;
   onRequireAuth?: () => void;
   onBack?: () => void;
+  onOrder?: () => void;
 };
 
-export function DesignScreen({ id, onRequireAuth, onBack }: Props) {
+export function DesignScreen({ id, onRequireAuth, onBack, onOrder }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { design, comments, isLoading, isError, refetch } = useDesign(id);
@@ -134,11 +134,7 @@ export function DesignScreen({ id, onRequireAuth, onBack }: Props) {
       <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.md }]}>
         <Button
           label="Commander ce modèle"
-          onPress={() =>
-            authed
-              ? Alert.alert('Bientôt', 'Le flux de commande arrive dans la prochaine mise à jour.')
-              : gate()
-          }
+          onPress={() => (authed ? onOrder?.() : gate())}
         />
       </View>
     </View>

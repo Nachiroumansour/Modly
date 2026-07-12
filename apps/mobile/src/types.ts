@@ -1,4 +1,4 @@
-import type { DesignCategory, Role } from '@moodly/shared';
+import type { DesignCategory, OrderStatus, PaymentStatus, Role } from '@moodly/shared';
 
 export type ApiUser = {
   id: string;
@@ -53,4 +53,31 @@ export type AuthResponse = {
   accessToken: string;
   refreshToken: string;
   user: AuthUser;
+};
+
+export type OrderDesign = { id: string; title: string; imageUrl: string } | null;
+
+export type Order = {
+  id: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  agreedPrice: number | null;
+  note: string | null;
+  estimatedDelivery: string | null;
+  createdAt: string;
+  client: ApiUser;
+  tailor: ApiUser;
+  design: OrderDesign;
+};
+
+export type OrderEvent = {
+  id: string;
+  status: OrderStatus;
+  note: string | null;
+  createdAt: string;
+};
+
+export type OrderDetail = Order & {
+  measurementsSnapshot: Record<string, number> | null;
+  events: OrderEvent[];
 };
