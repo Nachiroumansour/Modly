@@ -1,0 +1,79 @@
+import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MasonryColumns } from '../../src/feed/masonry';
+import { useBookmarks } from '../../src/feed/useBookmarks';
+import { colors, fonts, radius, spacing } from '../../src/theme';
+import { ErrorRetry } from '../../src/ui/ErrorRetry';
+
+export default function SavedTab() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { designs, isLoading, isError, refetch } = useBookmarks();
+
+  if (isLoading) {
+    return (
+      <View style={[styles.root, styles.center]}>
+        <ActivityIndicator color={colors.accent} />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={[styles.root, styles.center]}>
+        <ErrorRetry message="Impossible de charger tes sauvegardes." onRetry={refetch} dark />
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={{ paddingTop: insets.top + spacing.lg, paddingHorizontal: spacing.md, paddingBottom: 110 }}
+      showsVerticalScrollIndicator={false}
+    >
+      <Text style={styles.title}>Sauvegardés</Text>
+      {designs.length === 0 ? (
+        <View style={styles.empty}>
+          <View style={styles.badge}>
+            <Feather name="bookmark" size={26} color={colors.accent} />
+          </View>
+          <Text style={styles.emptyText}>Touche l'icône marque-page sur un modèle pour le retrouver ici.</Text>
+        </View>
+      ) : (
+        <MasonryColumns designs={designs} onOpen={(id) => router.push(`/design/${id}`)} />
+      )}
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.ink },
+  center: { alignItems: 'center', justifyContent: 'center' },
+  title: {
+    color: colors.textOnDark,
+    fontFamily: fonts.displayBold,
+    fontSize: 30,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.xs,
+  },
+  empty: { alignItems: 'center', marginTop: spacing.xxl * 2, gap: spacing.md, paddingHorizontal: spacing.xl },
+  badge: {
+    width: 72,
+    height: 72,
+    borderRadius: radius.lg,
+    backgroundColor: colors.inkElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    color: colors.textOnDarkMuted,
+    fontFamily: fonts.bodyRegular,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    maxWidth: 300,
+  },
+});
