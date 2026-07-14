@@ -1,31 +1,33 @@
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/auth/AuthContext';
 import { colors, fonts, radius, spacing } from '../../src/theme';
+import { AppHeader } from '../../src/ui/AppHeader';
 
 type FeatherName = keyof typeof Feather.glyphMap;
 
 export default function ProfileTab() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
 
   if (!user) {
     return (
-      <View style={[styles.root, styles.guest, { paddingTop: insets.top }]}>
-        <View style={styles.guestInner}>
-          <Text style={styles.guestTitle}>Rejoins Moodly</Text>
-          <Text style={styles.guestText}>
-            Crée ton compte pour commander, sauvegarder tes modèles préférés et suivre tes tailleurs.
-          </Text>
-          <Pressable style={styles.primary} onPress={() => router.push('/(auth)/register')}>
-            <Text style={styles.primaryText}>Créer un compte</Text>
-          </Pressable>
-          <Pressable style={styles.ghost} onPress={() => router.push('/(auth)/login')}>
-            <Text style={styles.ghostText}>J'ai déjà un compte</Text>
-          </Pressable>
+      <View style={styles.outer}>
+        <AppHeader />
+        <View style={[styles.root, styles.guest]}>
+          <View style={styles.guestInner}>
+            <Text style={styles.guestTitle}>Rejoins Moodly</Text>
+            <Text style={styles.guestText}>
+              Crée ton compte pour commander, sauvegarder tes modèles préférés et suivre tes tailleurs.
+            </Text>
+            <Pressable style={styles.primary} onPress={() => router.push('/(auth)/register')}>
+              <Text style={styles.primaryText}>Créer un compte</Text>
+            </Pressable>
+            <Pressable style={styles.ghost} onPress={() => router.push('/(auth)/login')}>
+              <Text style={styles.ghostText}>J'ai déjà un compte</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     );
@@ -35,34 +37,37 @@ export default function ProfileTab() {
   const roleLabel = user.role === 'TAILLEUR' ? 'Tailleur' : 'Client';
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={{ paddingTop: insets.top + spacing.xl, paddingBottom: 110 }}>
-      <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initial}</Text>
+    <View style={styles.outer}>
+      <AppHeader />
+      <ScrollView style={styles.root} contentContainerStyle={{ paddingTop: spacing.xl, paddingBottom: 110 }}>
+        <View style={styles.header}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initial}</Text>
+          </View>
+          <Text style={styles.name}>{user.name}</Text>
+          <View style={styles.roleChip}>
+            <Feather name={user.role === 'TAILLEUR' ? 'scissors' : 'user'} size={13} color={colors.accent} />
+            <Text style={styles.roleText}>{roleLabel}</Text>
+          </View>
         </View>
-        <Text style={styles.name}>{user.name}</Text>
-        <View style={styles.roleChip}>
-          <Feather name={user.role === 'TAILLEUR' ? 'scissors' : 'user'} size={13} color={colors.accent} />
-          <Text style={styles.roleText}>{roleLabel}</Text>
+
+        <View style={styles.list}>
+          <Row icon="edit-3" label="Modifier le profil" soon />
+          {user.role === 'TAILLEUR' ? (
+            <Row icon="grid" label="Ma boutique" soon />
+          ) : (
+            <Row icon="sliders" label="Mes mesures" onPress={() => router.push('/my-measurements')} />
+          )}
+          <Row icon="bell" label="Notifications" soon />
+          <Row icon="help-circle" label="Aide" soon />
         </View>
-      </View>
 
-      <View style={styles.list}>
-        <Row icon="edit-3" label="Modifier le profil" soon />
-        {user.role === 'TAILLEUR' ? (
-          <Row icon="grid" label="Ma boutique" soon />
-        ) : (
-          <Row icon="sliders" label="Mes mesures" onPress={() => router.push('/my-measurements')} />
-        )}
-        <Row icon="bell" label="Notifications" soon />
-        <Row icon="help-circle" label="Aide" soon />
-      </View>
-
-      <Pressable style={styles.logout} onPress={logout}>
-        <Feather name="log-out" size={18} color={colors.danger} />
-        <Text style={styles.logoutText}>Se déconnecter</Text>
-      </Pressable>
-    </ScrollView>
+        <Pressable style={styles.logout} onPress={logout}>
+          <Feather name="log-out" size={18} color={colors.danger} />
+          <Text style={styles.logoutText}>Se déconnecter</Text>
+        </Pressable>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -90,6 +95,7 @@ function Row({
 }
 
 const styles = StyleSheet.create({
+  outer: { flex: 1, backgroundColor: colors.ink },
   root: { flex: 1, backgroundColor: colors.ink },
   header: { alignItems: 'center', paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
   avatar: {

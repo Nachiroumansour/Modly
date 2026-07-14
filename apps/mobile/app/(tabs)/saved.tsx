@@ -1,55 +1,64 @@
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MasonryColumns } from '../../src/feed/masonry';
 import { useBookmarks } from '../../src/feed/useBookmarks';
 import { colors, fonts, radius, spacing } from '../../src/theme';
+import { AppHeader } from '../../src/ui/AppHeader';
 import { ErrorRetry } from '../../src/ui/ErrorRetry';
 
 export default function SavedTab() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { designs, isLoading, isError, refetch } = useBookmarks();
 
   if (isLoading) {
     return (
-      <View style={[styles.root, styles.center]}>
-        <ActivityIndicator color={colors.accent} />
+      <View style={styles.outer}>
+        <AppHeader />
+        <View style={[styles.root, styles.center]}>
+          <ActivityIndicator color={colors.accent} />
+        </View>
       </View>
     );
   }
 
   if (isError) {
     return (
-      <View style={[styles.root, styles.center]}>
-        <ErrorRetry message="Impossible de charger tes sauvegardes." onRetry={refetch} dark />
+      <View style={styles.outer}>
+        <AppHeader />
+        <View style={[styles.root, styles.center]}>
+          <ErrorRetry message="Impossible de charger tes sauvegardes." onRetry={refetch} dark />
+        </View>
       </View>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={{ paddingTop: insets.top + spacing.lg, paddingHorizontal: spacing.md, paddingBottom: 110 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <Text style={styles.title}>Sauvegardés</Text>
-      {designs.length === 0 ? (
-        <View style={styles.empty}>
-          <View style={styles.badge}>
-            <Feather name="bookmark" size={26} color={colors.accent} />
+    <View style={styles.outer}>
+      <AppHeader />
+      <ScrollView
+        style={styles.root}
+        contentContainerStyle={{ paddingTop: spacing.lg, paddingHorizontal: spacing.md, paddingBottom: 110 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title}>Sauvegardés</Text>
+        {designs.length === 0 ? (
+          <View style={styles.empty}>
+            <View style={styles.badge}>
+              <Feather name="bookmark" size={26} color={colors.accent} />
+            </View>
+            <Text style={styles.emptyText}>Touche l'icône marque-page sur un modèle pour le retrouver ici.</Text>
           </View>
-          <Text style={styles.emptyText}>Touche l'icône marque-page sur un modèle pour le retrouver ici.</Text>
-        </View>
-      ) : (
-        <MasonryColumns designs={designs} onOpen={(id) => router.push(`/design/${id}`)} />
-      )}
-    </ScrollView>
+        ) : (
+          <MasonryColumns designs={designs} onOpen={(id) => router.push(`/design/${id}`)} />
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  outer: { flex: 1, backgroundColor: colors.ink },
   root: { flex: 1, backgroundColor: colors.ink },
   center: { alignItems: 'center', justifyContent: 'center' },
   title: {
