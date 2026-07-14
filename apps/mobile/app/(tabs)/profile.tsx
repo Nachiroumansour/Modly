@@ -12,7 +12,7 @@ type FeatherName = keyof typeof Feather.glyphMap;
 export default function ProfileTab() {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { designs } = usePortfolio(user?.id);
+  const { designs } = usePortfolio(user?.role === 'TAILLEUR' ? user.id : undefined);
 
   if (!user) {
     return (
