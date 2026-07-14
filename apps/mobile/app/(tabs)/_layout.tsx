@@ -62,24 +62,30 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="feed" options={{ title: 'Accueil', tabBarIcon: icon('home'), href: href('feed') }} />
       <Tabs.Screen name="search" options={{ title: 'Recherche', tabBarIcon: icon('search'), href: href('search') }} />
+      {/* create & saved sont les onglets centraux : leur visibilité passe par
+          tabBarItemStyle (et non href) car expo-router interdit href + tabBarButton. */}
       <Tabs.Screen
         name="create"
         options={{
           title: 'Publier',
-          href: href('create'),
+          tabBarItemStyle: center === 'create' ? undefined : { display: 'none' },
           // Le bouton central "Publier" ouvre directement le flux /publish
           // (il ne bascule PAS vers l'onglet create, qui n'est qu'un redirect de secours).
-          tabBarButton: () => <CenterTabButton icon="plus" label="Publier" onPress={() => router.push('/publish')} />,
+          tabBarButton:
+            center === 'create'
+              ? () => <CenterTabButton icon="plus" label="Publier" onPress={() => router.push('/publish')} />
+              : () => null,
         }}
       />
       <Tabs.Screen
         name="saved"
         options={{
           title: 'Sauvegardés',
-          href: href('saved'),
+          tabBarItemStyle: center === 'saved' ? undefined : { display: 'none' },
           tabBarButton:
-            center === 'saved' ? (p) => <CenterTabButton icon="bookmark" label="Sauvegardés" onPress={p.onPress} /> : undefined,
-          tabBarIcon: icon('bookmark'),
+            center === 'saved'
+              ? (p) => <CenterTabButton icon="bookmark" label="Sauvegardés" onPress={p.onPress} />
+              : () => null,
         }}
       />
       <Tabs.Screen name="orders" options={{ title: 'Commandes', tabBarIcon: icon('shopping-bag'), href: href('orders') }} />
