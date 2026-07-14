@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import { colors, fonts, radius, spacing } from '../theme';
 import type { Design } from '../types';
 
@@ -8,6 +8,7 @@ type Props = {
   onPress: () => void;
 };
 
+// Carte façon Pinterest : l'image arrondie EST la carte, petit titre sobre dessous.
 export function DesignCard({ design, onPress }: Props) {
   const ratio = design.imageWidth / design.imageHeight;
   return (
@@ -19,28 +20,26 @@ export function DesignCard({ design, onPress }: Props) {
         contentFit="cover"
         transition={180}
       />
-      <View style={styles.meta}>
-        <Text style={styles.title} numberOfLines={1}>
-          {design.title}
-        </Text>
-        <Text style={styles.tailor} numberOfLines={1}>
-          {design.tailor.name}
-        </Text>
-      </View>
+      <Text style={styles.title} numberOfLines={1}>
+        {design.title}
+      </Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  card: { marginBottom: spacing.md },
+  pressed: { opacity: 0.92 },
+  image: {
+    width: '100%',
     borderRadius: radius.md,
-    overflow: 'hidden',
-    backgroundColor: colors.surfaceWarm,
-    marginBottom: spacing.md,
+    backgroundColor: colors.inkElevated,
   },
-  pressed: { opacity: 0.9 },
-  image: { width: '100%', backgroundColor: colors.border },
-  meta: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  title: { color: colors.textPrimary, fontFamily: fonts.bodyBold, fontSize: 14 },
-  tailor: { color: colors.textSecondary, fontFamily: fonts.body, fontSize: 12, marginTop: 2 },
+  title: {
+    color: colors.textOnDark,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    marginTop: spacing.sm,
+    marginHorizontal: spacing.xs,
+  },
 });

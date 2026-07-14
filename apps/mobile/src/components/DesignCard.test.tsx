@@ -20,10 +20,12 @@ const design: Design = {
 };
 
 describe('DesignCard', () => {
-  it('affiche le titre et le nom du tailleur', () => {
+  it('affiche l’image et un titre sobre (façon Pinterest, sans bandeau)', () => {
     render(<DesignCard design={design} onPress={() => {}} />);
+    expect(screen.getByTestId('design-image')).toBeTruthy();
     expect(screen.getByText('Boubou Tabaski')).toBeTruthy();
-    expect(screen.getByText('Atelier Awa')).toBeTruthy();
+    // Le nom du tailleur n'apparaît plus sur la tuile (il est sur le détail).
+    expect(screen.queryByText('Atelier Awa')).toBeNull();
   });
 
   it('préserve le ratio réel de l’image (Pinterest)', () => {

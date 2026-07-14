@@ -5,7 +5,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useAuth } from '../../src/auth/AuthContext';
 import { CenterTabButton } from '../../src/navigation/CenterTabButton';
 import { centerTab, visibleTabs, type TabName } from '../../src/navigation/tabs';
-import { colors, fonts } from '../../src/theme';
+import { colors, fonts, spacing } from '../../src/theme';
 
 type FeatherName = keyof typeof Feather.glyphMap;
 
@@ -15,13 +15,12 @@ function icon(name: FeatherName) {
   );
 }
 
-// Fond en verre dépoli (façon WhatsApp/iOS) — blur + voile sombre pour le contraste.
+// Fond en verre dépoli flottant (façon WhatsApp) — blur arrondi + voile sombre translucide.
 function GlassTabBar() {
   return (
-    <View style={StyleSheet.absoluteFill}>
-      <BlurView tint="dark" intensity={36} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
+    <View style={styles.glass}>
+      <BlurView tint="dark" intensity={50} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
       <View style={styles.veil} />
-      <View style={styles.hairline} />
     </View>
   );
 }
@@ -50,13 +49,23 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.textOnDarkMuted,
         tabBarLabelStyle: { fontFamily: fonts.bodyBold, fontSize: 11 },
         tabBarBackground: () => <GlassTabBar />,
+        // Barre flottante arrondie (façon WhatsApp) : marges latérales + bas, coins arrondis.
         tabBarStyle: {
           position: 'absolute',
+          left: spacing.lg,
+          right: spacing.lg,
+          bottom: Platform.OS === 'ios' ? 30 : 20,
+          height: 66,
+          borderRadius: 33,
           backgroundColor: 'transparent',
           borderTopWidth: 0,
           elevation: 0,
-          height: Platform.OS === 'ios' ? 88 : 68,
-          paddingTop: 8,
+          paddingTop: 10,
+          paddingHorizontal: spacing.sm,
+          shadowColor: '#000',
+          shadowOpacity: 0.3,
+          shadowRadius: 18,
+          shadowOffset: { width: 0, height: 10 },
         },
       }}
     >
@@ -97,13 +106,13 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  veil: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(23,18,15,0.55)' },
-  hairline: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(246,241,233,0.12)',
+  // Conteneur du verre : arrondi + clip du blur, fine bordure claire (bord de verre).
+  glass: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 33,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(246,241,233,0.16)',
   },
+  veil: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(23,18,15,0.5)' },
 });

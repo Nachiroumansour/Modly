@@ -41,6 +41,6 @@ export function MasonryColumns({
 }
 
 const styles = StyleSheet.create({
-  columns: { flexDirection: 'row', gap: spacing.md },
+  columns: { flexDirection: 'row', gap: spacing.sm },
   column: { flex: 1 },
 });
