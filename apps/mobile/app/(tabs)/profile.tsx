@@ -2,6 +2,8 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../src/auth/AuthContext';
+import { usePortfolio } from '../../src/designs/hooks';
+import { TailorProfileBody } from '../../src/profile/TailorProfileBody';
 import { colors, fonts, radius, spacing } from '../../src/theme';
 import { AppHeader } from '../../src/ui/AppHeader';
 
@@ -10,6 +12,7 @@ type FeatherName = keyof typeof Feather.glyphMap;
 export default function ProfileTab() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { designs } = usePortfolio(user?.id);
 
   if (!user) {
     return (
@@ -53,14 +56,21 @@ export default function ProfileTab() {
 
         <View style={styles.list}>
           <Row icon="edit-3" label="Modifier le profil" soon />
-          {user.role === 'TAILLEUR' ? (
-            <Row icon="grid" label="Ma boutique" soon />
-          ) : (
+          {user.role === 'CLIENT' ? (
             <Row icon="sliders" label="Mes mesures" onPress={() => router.push('/my-measurements')} />
-          )}
+          ) : null}
           <Row icon="bell" label="Notifications" soon />
           <Row icon="help-circle" label="Aide" soon />
         </View>
+
+        {user.role === 'TAILLEUR' ? (
+          <TailorProfileBody
+            designs={designs}
+            onPublish={() => router.push('/publish')}
+            onOpenClients={() => router.push('/clients')}
+            onOpenDesign={(id) => router.push(`/design/${id}`)}
+          />
+        ) : null}
 
         <Pressable style={styles.logout} onPress={logout}>
           <Feather name="log-out" size={18} color={colors.danger} />
