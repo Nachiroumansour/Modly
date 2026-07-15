@@ -85,4 +85,11 @@ describe('DesignScreen', () => {
     fireEvent.press(screen.getByText('Boubou fete'));
     expect(onOpenDesign).toHaveBeenCalledWith('d2');
   });
+
+  it('ouvre le popup commentaires en tapant licone commentaire', () => {
+    render(<DesignScreen id="d1" />);
+    expect(screen.queryByText('Commentaires')).toBeNull();
+    fireEvent.press(screen.getByTestId('action-comment'));
+    expect(screen.getByText('Commentaires')).toBeTruthy();
+  });
 });

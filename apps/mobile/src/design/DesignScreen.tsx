@@ -1,20 +1,13 @@
 import { Feather } from '@expo/vector-icons';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/AuthContext';
 import { MasonryColumns } from '../feed/masonry';
 import { colors, fonts, radius, spacing } from '../theme';
 import { Button } from '../ui/Button';
 import { ErrorRetry } from '../ui/ErrorRetry';
+import { CommentsSheet } from './CommentsSheet';
 import { MediaCarousel } from './MediaCarousel';
 import { SocialActionBar } from './SocialActionBar';
 import { useDesign } from './useDesign';
@@ -38,6 +31,7 @@ export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor, onO
   const actions = useDesignActions(id);
   const authed = Boolean(user);
   const gate = onRequireAuth ?? (() => {});
+  const [commentsOpen, setCommentsOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -103,7 +97,7 @@ export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor, onO
             onLike={like}
             onSave={save}
             onShare={share}
-            onComment={() => (authed ? undefined : gate())}
+            onComment={() => setCommentsOpen(true)}
           />
 
           {similar.length > 0 ? (
@@ -112,43 +106,24 @@ export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor, onO
               <MasonryColumns designs={similar} onOpen={(sid) => onOpenDesign?.(sid)} />
             </View>
           ) : null}
-
-          <Text style={styles.sectionTitle}>Commentaires</Text>
-          {authed ? (
-            <View style={styles.commentBox}>
-              <TextInput
-                value={actions.commentText}
-                onChangeText={actions.setCommentText}
-                placeholder="Ecris un commentaire..."
-                placeholderTextColor={colors.textOnDarkMuted}
-                style={styles.commentInput}
-                multiline
-              />
-              <Pressable onPress={actions.submitComment} disabled={actions.commenting} style={styles.send}>
-                <Feather name="send" size={18} color={colors.textOnDark} />
-              </Pressable>
-            </View>
-          ) : (
-            <Pressable onPress={gate} style={styles.commentGate}>
-              <Text style={styles.commentGateText}>Connecte-toi pour commenter</Text>
-            </Pressable>
-          )}
-          {comments.length === 0 ? (
-            <Text style={styles.noComments}>Sois le premier a commenter.</Text>
-          ) : (
-            comments.map((c) => (
-              <View key={c.id} style={styles.comment}>
-                <Text style={styles.commentAuthor}>{c.user.name}</Text>
-                <Text style={styles.commentText}>{c.text}</Text>
-              </View>
-            ))
-          )}
         </View>
       </ScrollView>
 
       <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.md }]}>
         <Button label="Commander ce modele" onPress={() => (authed ? onOrder?.() : gate())} />
       </View>
+
+      <CommentsSheet
+        visible={commentsOpen}
+        onClose={() => setCommentsOpen(false)}
+        comments={comments}
+        commentText={actions.commentText}
+        setCommentText={actions.setCommentText}
+        submitComment={actions.submitComment}
+        commenting={actions.commenting}
+        authed={authed}
+        onRequireAuth={gate}
+      />
     </View>
   );
 }
@@ -194,40 +169,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xxl,
     marginBottom: spacing.md,
   },
-  commentBox: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, marginBottom: spacing.lg },
-  commentInput: {
-    flex: 1,
-    minHeight: 46,
-    maxHeight: 120,
-    borderRadius: radius.md,
-    backgroundColor: colors.inkElevated,
-    color: colors.textOnDark,
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    fontFamily: fonts.bodyRegular,
-    fontSize: 15,
-  },
-  send: {
-    width: 46,
-    height: 46,
-    borderRadius: radius.md,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  commentGate: {
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.inkLine,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  commentGateText: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyBold, fontSize: 14 },
-  noComments: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyRegular },
-  comment: { marginBottom: spacing.lg },
-  commentAuthor: { color: colors.textOnDark, fontFamily: fonts.bodyBold, fontSize: 13 },
-  commentText: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyRegular, marginTop: 2 },
   cta: {
     position: 'absolute',
     left: 0,
