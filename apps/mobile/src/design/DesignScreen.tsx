@@ -1,9 +1,9 @@
 import { Feather } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import {
   ActivityIndicator,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -11,14 +11,15 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/AuthContext';
-import { imageUri } from '../lib/config';
+import { MasonryColumns } from '../feed/masonry';
 import { colors, fonts, radius, spacing } from '../theme';
 import { Button } from '../ui/Button';
 import { ErrorRetry } from '../ui/ErrorRetry';
+import { MediaCarousel } from './MediaCarousel';
+import { SocialActionBar } from './SocialActionBar';
 import { useDesign } from './useDesign';
 import { useDesignActions } from './useDesignActions';
-
-type FeatherName = keyof typeof Feather.glyphMap;
+import { useSimilar } from './useSimilar';
 
 type Props = {
   id: string;
@@ -26,14 +27,17 @@ type Props = {
   onBack?: () => void;
   onOrder?: () => void;
   onTailor?: (tailorId: string) => void;
+  onOpenDesign?: (id: string) => void;
 };
 
-export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor }: Props) {
+export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor, onOpenDesign }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { design, comments, isLoading, isError, refetch } = useDesign(id);
+  const { designs: similar } = useSimilar(id);
   const actions = useDesignActions(id);
   const authed = Boolean(user);
+  const gate = onRequireAuth ?? (() => {});
 
   if (isLoading) {
     return (
@@ -42,77 +46,85 @@ export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor }: P
       </View>
     );
   }
-
   if (isError || !design) {
     return (
       <View style={[styles.screen, styles.center]}>
-        <ErrorRetry message="Impossible de charger ce modèle." onRetry={refetch} dark />
+        <ErrorRetry message="Impossible de charger ce modele." onRetry={refetch} dark />
       </View>
     );
   }
 
-  const gate = onRequireAuth ?? (() => {});
+  const like = () => (authed ? actions.toggleLike(design.likedByMe) : gate());
+  const save = () => (authed ? actions.toggleBookmark(design.bookmarkedByMe) : gate());
+  const share = () =>
+    Share.share({ message: `${design.title} par ${design.tailor.name} sur Modly` });
+  const initial = design.tailor.name.trim().charAt(0).toUpperCase();
 
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
-        <Image
-          source={{ uri: imageUri(design.imageUrl) }}
-          style={[styles.image, { aspectRatio: design.imageWidth / design.imageHeight }]}
-          contentFit="cover"
-          transition={200}
-        />
-        {onBack ? (
-          <Pressable onPress={onBack} style={[styles.back, { top: insets.top + spacing.sm }]} hitSlop={10}>
-            <Feather name="chevron-left" size={26} color={colors.textOnDark} />
-          </Pressable>
-        ) : null}
+        <View>
+          <MediaCarousel
+            media={design.media}
+            cover={{
+              url: design.imageUrl,
+              width: design.imageWidth,
+              height: design.imageHeight,
+              blurhash: design.coverBlurhash,
+            }}
+            onDoubleTapLike={like}
+          />
+          {onBack ? (
+            <Pressable onPress={onBack} style={[styles.back, { top: insets.top + spacing.sm }]} hitSlop={10}>
+              <Feather name="chevron-left" size={26} color={colors.textOnDark} />
+            </Pressable>
+          ) : null}
+        </View>
 
         <View style={styles.body}>
           <Text style={styles.title}>{design.title}</Text>
-          <Pressable onPress={() => onTailor?.(design.tailor.id)}>
-            <Text style={styles.tailor}>par {design.tailor.name} ›</Text>
+
+          <Pressable style={styles.author} onPress={() => onTailor?.(design.tailor.id)}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{initial}</Text>
+            </View>
+            <Text style={styles.authorName}>{design.tailor.name}</Text>
+            <Feather name="chevron-right" size={18} color={colors.textOnDarkMuted} />
           </Pressable>
+
           {design.description ? <Text style={styles.description}>{design.description}</Text> : null}
 
-          <View style={styles.stats}>
-            <Stat icon="heart" value={design.likesCount} />
-            <Stat icon="message-circle" value={design.commentsCount} />
-            <Stat icon="bookmark" value={design.bookmarksCount} />
-          </View>
+          <SocialActionBar
+            liked={design.likedByMe}
+            saved={design.bookmarkedByMe}
+            likesCount={design.likesCount}
+            commentsCount={design.commentsCount}
+            bookmarksCount={design.bookmarksCount}
+            onLike={like}
+            onSave={save}
+            onShare={share}
+            onComment={() => (authed ? undefined : gate())}
+          />
 
-          <View style={styles.actions}>
-            <ActionGhost
-              icon="heart"
-              label={design.likedByMe ? 'Aimé' : "J'aime"}
-              active={design.likedByMe}
-              onPress={() => (authed ? actions.toggleLike(design.likedByMe) : gate())}
-            />
-            <ActionGhost
-              icon="bookmark"
-              label={design.bookmarkedByMe ? 'Sauvegardé' : 'Sauvegarder'}
-              active={design.bookmarkedByMe}
-              onPress={() => (authed ? actions.toggleBookmark(design.bookmarkedByMe) : gate())}
-            />
-          </View>
+          {similar.length > 0 ? (
+            <View style={styles.similar}>
+              <Text style={styles.sectionTitle}>Explorer davantage</Text>
+              <MasonryColumns designs={similar} onOpen={(sid) => onOpenDesign?.(sid)} />
+            </View>
+          ) : null}
 
           <Text style={styles.sectionTitle}>Commentaires</Text>
-
           {authed ? (
             <View style={styles.commentBox}>
               <TextInput
                 value={actions.commentText}
                 onChangeText={actions.setCommentText}
-                placeholder="Écris un commentaire…"
+                placeholder="Ecris un commentaire..."
                 placeholderTextColor={colors.textOnDarkMuted}
                 style={styles.commentInput}
                 multiline
               />
-              <Pressable
-                onPress={actions.submitComment}
-                disabled={actions.commenting}
-                style={styles.send}
-              >
+              <Pressable onPress={actions.submitComment} disabled={actions.commenting} style={styles.send}>
                 <Feather name="send" size={18} color={colors.textOnDark} />
               </Pressable>
             </View>
@@ -121,9 +133,8 @@ export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor }: P
               <Text style={styles.commentGateText}>Connecte-toi pour commenter</Text>
             </Pressable>
           )}
-
           {comments.length === 0 ? (
-            <Text style={styles.noComments}>Sois le premier à commenter.</Text>
+            <Text style={styles.noComments}>Sois le premier a commenter.</Text>
           ) : (
             comments.map((c) => (
               <View key={c.id} style={styles.comment}>
@@ -136,47 +147,15 @@ export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor }: P
       </ScrollView>
 
       <View style={[styles.cta, { paddingBottom: insets.bottom + spacing.md }]}>
-        <Button
-          label="Commander ce modèle"
-          onPress={() => (authed ? onOrder?.() : gate())}
-        />
+        <Button label="Commander ce modele" onPress={() => (authed ? onOrder?.() : gate())} />
       </View>
     </View>
-  );
-}
-
-function Stat({ icon, value }: { icon: FeatherName; value: number }) {
-  return (
-    <View style={styles.stat}>
-      <Feather name={icon} size={16} color={colors.textOnDarkMuted} />
-      <Text style={styles.statValue}>{value}</Text>
-    </View>
-  );
-}
-
-function ActionGhost({
-  icon,
-  label,
-  active,
-  onPress,
-}: {
-  icon: FeatherName;
-  label: string;
-  active?: boolean;
-  onPress?: () => void;
-}) {
-  return (
-    <Pressable style={[styles.actionGhost, active && styles.actionActive]} onPress={onPress}>
-      <Feather name={icon} size={18} color={active ? colors.accent : colors.textOnDark} />
-      <Text style={[styles.actionGhostText, active && styles.actionActiveText]}>{label}</Text>
-    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.ink },
   center: { alignItems: 'center', justifyContent: 'center' },
-  image: { width: '100%', backgroundColor: colors.inkElevated },
   back: {
     position: 'absolute',
     left: spacing.md,
@@ -189,7 +168,17 @@ const styles = StyleSheet.create({
   },
   body: { padding: spacing.xl },
   title: { color: colors.textOnDark, fontFamily: fonts.displayBold, fontSize: 28, lineHeight: 32 },
-  tailor: { color: colors.accent, fontFamily: fonts.bodyBold, fontSize: 15, marginTop: spacing.xs },
+  author: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
+  avatar: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { color: colors.textOnDark, fontFamily: fonts.displayBold, fontSize: 15 },
+  authorName: { flex: 1, color: colors.textOnDark, fontFamily: fonts.bodyBold, fontSize: 15 },
   description: {
     color: colors.textOnDarkMuted,
     fontFamily: fonts.bodyRegular,
@@ -197,24 +186,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginTop: spacing.md,
   },
-  stats: { flexDirection: 'row', gap: spacing.xl, marginTop: spacing.xl },
-  stat: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  statValue: { color: colors.textOnDark, fontFamily: fonts.bodyBold, fontSize: 15 },
-  actions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl },
-  actionGhost: {
-    flex: 1,
-    height: 50,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.inkLine,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  actionActive: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
-  actionGhostText: { color: colors.textOnDark, fontFamily: fonts.bodyBold, fontSize: 14 },
-  actionActiveText: { color: colors.accent },
+  similar: { marginTop: spacing.xxl },
   sectionTitle: {
     color: colors.textOnDark,
     fontFamily: fonts.bodyHeavy,
@@ -222,12 +194,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xxl,
     marginBottom: spacing.md,
   },
-  commentBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
+  commentBox: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, marginBottom: spacing.lg },
   commentInput: {
     flex: 1,
     minHeight: 46,
