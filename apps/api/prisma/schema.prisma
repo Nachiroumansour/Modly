@@ -72,6 +72,9 @@ model Design {
   imageUrl       String
   imageWidth     Int
   imageHeight    Int
+  coverBlurhash  String?
+  mediaCount     Int            @default(1)
+  media          Media[]
   likesCount     Int            @default(0)
   commentsCount  Int            @default(0)
   bookmarksCount Int            @default(0)
@@ -84,6 +87,29 @@ model Design {
   @@index([category])
   @@index([tailorId])
   @@map("designs")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model Media {
+  id           String    @id @default(cuid())
+  design       Design    @relation(fields: [designId], references: [id], onDelete: Cascade)
+  designId     String
+  type         MediaType @default(IMAGE)
+  url          String
+  thumbnailUrl String?
+  width        Int
+  height       Int
+  duration     Int?
+  blurhash     String?
+  position     Int
+  createdAt    DateTime  @default(now())
+
+  @@index([designId, position])
+  @@map("media")
 }
 
 model Like {
