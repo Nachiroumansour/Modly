@@ -13,6 +13,20 @@ export type ApiUser = {
   avatarUrl: string | null;
 };
 
+export type MediaType = 'IMAGE' | 'VIDEO';
+
+export type Media = {
+  id: string;
+  type: MediaType;
+  url: string;
+  thumbnailUrl: string | null;
+  width: number;
+  height: number;
+  duration: number | null;
+  blurhash: string | null;
+  position: number;
+};
+
 export type Design = {
   id: string;
   title: string;
@@ -21,6 +35,9 @@ export type Design = {
   imageUrl: string;
   imageWidth: number;
   imageHeight: number;
+  coverBlurhash: string | null;
+  mediaCount: number;
+  media: Media[];
   likesCount: number;
   commentsCount: number;
   bookmarksCount: number;
@@ -62,7 +79,7 @@ export type AuthResponse = {
   user: AuthUser;
 };
 
-export type OrderDesign = { id: string; title: string; imageUrl: string } | null;
+export type OrderDesign = { id: string; title: string; imageUrl: string; coverBlurhash: string | null } | null;
 
 export type Order = {
   id: string;
