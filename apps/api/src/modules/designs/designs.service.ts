@@ -37,6 +37,34 @@ export function toApiDesign(design: DesignWithViewer) {
   };
 }
 
+export async function getSimilarDesigns(designId: string, viewerId: string, limit: number) {
+  const current = await prisma.design.findUnique({
+    where: { id: designId },
+    select: { id: true, tailorId: true, category: true },
+  });
+  if (!current) {
+    throw new ApiError(404, 'INTROUVABLE', 'Modèle introuvable.');
+  }
+  const sameTailor = await prisma.design.findMany({
+    where: { tailorId: current.tailorId, id: { not: current.id } },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    include: designInclude(viewerId),
+  });
+  const excludeIds = [current.id, ...sameTailor.map((d) => d.id)];
+  const remaining = limit - sameTailor.length;
+  const sameCategory =
+    remaining > 0
+      ? await prisma.design.findMany({
+          where: { category: current.category, id: { notIn: excludeIds } },
+          orderBy: { createdAt: 'desc' },
+          take: remaining,
+          include: designInclude(viewerId),
+        })
+      : [];
+  return [...sameTailor, ...sameCategory].map(toApiDesign);
+}
+
 export async function ensureDesignExists(designId: string): Promise<void> {
   const design = await prisma.design.findUnique({
     where: { id: designId },

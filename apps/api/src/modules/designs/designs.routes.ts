@@ -12,6 +12,7 @@ import {
   designInclude,
   ensureDesignExists,
   removeReaction,
+  getSimilarDesigns,
   toApiDesign,
 } from './designs.service.js';
 
@@ -175,6 +176,14 @@ designsRouter.get('/:id/comments', async (req, res) => {
     include: { user: { select: { id: true, name: true, avatarUrl: true } } },
   });
   res.json({ comments });
+});
+
+designsRouter.get('/:id/similar', optionalAuth, async (req, res) => {
+  const raw = Number(req.query.limit);
+  const limit = Math.min(Math.max(Number.isFinite(raw) ? raw : 12, 1), 30);
+  const viewerId = req.user?.sub ?? '';
+  const designs = await getSimilarDesigns(req.params.id as string, viewerId, limit);
+  res.json({ designs });
 });
 
 designsRouter.get('/:id', optionalAuth, async (req, res) => {
