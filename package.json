@@ -11,8 +11,5 @@
   "scripts": {
     "test": "npm test --workspaces --if-present",
     "dev:api": "npm run dev -w apps/api"
-  },
-  "dependencies": {
-    "blurhash": "^2.0.5"
   }
 }
