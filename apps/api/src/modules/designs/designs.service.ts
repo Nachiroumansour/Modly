@@ -9,6 +9,7 @@ export function designInclude(viewerId: string) {
     tailor: { select: publicUserSelect },
     likes: { where: { userId: viewerId }, select: { id: true } },
     bookmarks: { where: { userId: viewerId }, select: { id: true } },
+    media: { orderBy: { position: 'asc' as const } },
   } satisfies Prisma.DesignInclude;
 }
 
@@ -17,8 +18,23 @@ type DesignWithViewer = Prisma.DesignGetPayload<{
 }>;
 
 export function toApiDesign(design: DesignWithViewer) {
-  const { likes, bookmarks, ...rest } = design;
-  return { ...rest, likedByMe: likes.length > 0, bookmarkedByMe: bookmarks.length > 0 };
+  const { likes, bookmarks, media, ...rest } = design;
+  return {
+    ...rest,
+    media: media.map((m) => ({
+      id: m.id,
+      type: m.type,
+      url: m.url,
+      thumbnailUrl: m.thumbnailUrl,
+      width: m.width,
+      height: m.height,
+      duration: m.duration,
+      blurhash: m.blurhash,
+      position: m.position,
+    })),
+    likedByMe: likes.length > 0,
+    bookmarkedByMe: bookmarks.length > 0,
+  };
 }
 
 export async function ensureDesignExists(designId: string): Promise<void> {
