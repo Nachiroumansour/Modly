@@ -34,6 +34,7 @@ describe('upload multi-images', () => {
       .field('title', 'Sans image')
       .field('category', 'ROBE');
     expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('IMAGE_REQUISE');
   });
 
   it('refuse 6 images (400)', async () => {
@@ -46,6 +47,19 @@ describe('upload multi-images', () => {
     for (let i = 0; i < 6; i++) req.attach('media', await makeTestImage(600, 800), `x${i}.jpg`);
     const res = await req;
     expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('CHAMP_MEDIA');
+  });
+
+  it('refuse un fichier sous l ancien champ image (400, CHAMP_MEDIA)', async () => {
+    const { token } = await registerUser(app, 'TAILLEUR', '+221770003005');
+    const res = await request(app)
+      .post('/designs')
+      .set('Authorization', `Bearer ${token}`)
+      .field('title', 'Mauvais champ')
+      .field('category', 'ROBE')
+      .attach('image', await makeTestImage(), 'x.png');
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('CHAMP_MEDIA');
   });
 
   it('refuse un fichier non-image (400)', async () => {

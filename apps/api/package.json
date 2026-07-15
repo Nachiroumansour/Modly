@@ -7,6 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "pretest": "dotenv -e .env.test -- prisma migrate deploy",
     "test": "vitest run",
+    "backfill:media": "tsx scripts/backfill-media.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

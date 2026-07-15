@@ -35,6 +35,7 @@ export default function Publish() {
     });
     if (!res.canceled) {
       setUris(res.assets.slice(0, 5).map((a) => a.uri));
+      if (res.assets.length > 5) setError('Seules les 5 premières photos sont gardées.');
     }
   }
 
@@ -75,7 +76,16 @@ export default function Publish() {
         {uris.length > 1 ? (
           <View style={styles.thumbs}>
             {uris.map((u, i) => (
-              <Image key={u + i} source={{ uri: u }} style={styles.thumb} contentFit="cover" />
+              <Pressable
+                key={u + i}
+                testID="remove-thumb"
+                onPress={() => setUris((prev) => prev.filter((_, idx) => idx !== i))}
+              >
+                <Image source={{ uri: u }} style={styles.thumb} contentFit="cover" />
+                <View style={styles.thumbRemove}>
+                  <Feather name="x" size={12} color={colors.textOnDark} />
+                </View>
+              </Pressable>
             ))}
           </View>
         ) : null}
@@ -152,6 +162,17 @@ const styles = StyleSheet.create({
   preview: { width: '100%', height: '100%' },
   thumbs: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg, marginTop: spacing.sm, flexWrap: 'wrap' },
   thumb: { width: 54, height: 54, borderRadius: radius.sm, backgroundColor: colors.inkElevated },
+  thumbRemove: {
+    position: 'absolute',
+    top: spacing.xs / 2,
+    right: spacing.xs / 2,
+    width: 18,
+    height: 18,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(23,18,15,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pickerEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   pickerText: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyBold, fontSize: 14 },
   section: { paddingHorizontal: spacing.lg, marginTop: spacing.xl },

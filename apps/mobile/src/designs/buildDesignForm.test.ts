@@ -22,7 +22,10 @@ describe('buildDesignForm', () => {
       category: 'ENSEMBLE',
       description: 'desc',
     });
-    expect(parts.filter((p) => p[0] === 'media')).toHaveLength(2);
+    const media = parts.filter((p) => p[0] === 'media');
+    expect(media).toHaveLength(2);
+    expect((media[0][1] as { uri: string }).uri.endsWith('a.jpg')).toBe(true);
+    expect((media[1][1] as { uri: string }).uri.endsWith('b.png')).toBe(true);
     expect(parts.some((p) => p[0] === 'title' && p[1] === 'Carrousel')).toBe(true);
     expect(parts.some((p) => p[0] === 'category' && p[1] === 'ENSEMBLE')).toBe(true);
     expect(parts.some((p) => p[0] === 'description' && p[1] === 'desc')).toBe(true);
