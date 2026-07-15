@@ -2,8 +2,9 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../src/auth/AuthContext';
-import { usePortfolio } from '../../src/designs/hooks';
+import { ProfileHero } from '../../src/profile/ProfileHero';
 import { TailorProfileBody } from '../../src/profile/TailorProfileBody';
+import { useTailorProfile } from '../../src/tailors/hooks';
 import { colors, fonts, radius, spacing } from '../../src/theme';
 import { AppHeader } from '../../src/ui/AppHeader';
 
@@ -12,7 +13,7 @@ type FeatherName = keyof typeof Feather.glyphMap;
 export default function ProfileTab() {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { designs } = usePortfolio(user?.role === 'TAILLEUR' ? user.id : undefined);
+  const { tailor, designs } = useTailorProfile(user?.role === 'TAILLEUR' ? (user.id as string) : '');
 
   if (!user) {
     return (
@@ -36,26 +37,27 @@ export default function ProfileTab() {
     );
   }
 
-  const initial = user.name.trim().charAt(0).toUpperCase();
-  const roleLabel = user.role === 'TAILLEUR' ? 'Tailleur' : 'Client';
-
   return (
     <View style={styles.outer}>
       <AppHeader />
       <ScrollView style={styles.root} contentContainerStyle={{ paddingTop: spacing.xl, paddingBottom: 110 }}>
-        <View style={styles.header}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initial}</Text>
-          </View>
-          <Text style={styles.name}>{user.name}</Text>
-          <View style={styles.roleChip}>
-            <Feather name={user.role === 'TAILLEUR' ? 'scissors' : 'user'} size={13} color={colors.accent} />
-            <Text style={styles.roleText}>{roleLabel}</Text>
-          </View>
-        </View>
+        {user.role === 'TAILLEUR' ? (
+          <ProfileHero
+            name={user.name}
+            verified={tailor?.profile?.verified}
+            location={tailor?.profile?.location}
+            stats={[
+              { label: 'Modèles', value: tailor?.designsCount ?? 0 },
+              { label: 'Abonnés', value: tailor?.followersCount ?? 0 },
+            ]}
+            bio={tailor?.profile?.bio}
+            specialties={tailor?.profile?.specialties ?? []}
+          />
+        ) : (
+          <ProfileHero name={user.name} roleLabel="Client" />
+        )}
 
         <View style={styles.list}>
-          <Row icon="edit-3" label="Modifier le profil" soon />
           {user.role === 'CLIENT' ? (
             <Row icon="sliders" label="Mes mesures" onPress={() => router.push('/my-measurements')} />
           ) : null}
@@ -107,30 +109,7 @@ function Row({
 const styles = StyleSheet.create({
   outer: { flex: 1, backgroundColor: colors.ink },
   root: { flex: 1, backgroundColor: colors.ink },
-  header: { alignItems: 'center', paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  avatarText: { color: colors.textOnDark, fontFamily: fonts.displayBold, fontSize: 40 },
-  name: { color: colors.textOnDark, fontFamily: fonts.display, fontSize: 26 },
-  roleChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: spacing.sm,
-    backgroundColor: colors.accentSoft,
-    paddingVertical: 6,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-  },
-  roleText: { color: colors.accent, fontFamily: fonts.bodyBold, fontSize: 13 },
-  list: { paddingHorizontal: spacing.lg, gap: 2 },
+  list: { paddingHorizontal: spacing.lg, gap: 2, marginTop: spacing.md },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
