@@ -83,32 +83,49 @@ designsRouter.post(
   '/',
   requireAuth,
   requireRole('TAILLEUR'),
-  upload.single('image'),
+  upload.array('media', 5),
   async (req, res) => {
     const parsed = createDesignSchema.safeParse(req.body);
     if (!parsed.success) {
       throw new ApiError(400, 'DONNEES_INVALIDES', parsed.error.issues[0].message);
     }
-    if (!req.file) {
-      throw new ApiError(400, 'IMAGE_REQUISE', 'Une photo du modèle est requise.');
+    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+    if (files.length === 0) {
+      throw new ApiError(400, 'IMAGE_REQUISE', 'Ajoute au moins une photo du modèle.');
     }
-    if (!ALLOWED_MIMES.includes(req.file.mimetype)) {
-      throw new ApiError(
-        400,
-        'FORMAT_IMAGE_INVALIDE',
-        'Formats acceptés : JPEG, PNG ou WebP.',
-      );
+    if (files.length > 5) {
+      throw new ApiError(400, 'TROP_IMAGES', 'Maximum 5 images par modèle.');
     }
-    const image = await storage.save(req.file.buffer);
+    for (const f of files) {
+      if (!ALLOWED_MIMES.includes(f.mimetype)) {
+        throw new ApiError(400, 'FORMAT_IMAGE_INVALIDE', 'Formats acceptés : JPEG, PNG ou WebP.');
+      }
+    }
+
+    const stored = await Promise.all(files.map((f) => storage.save(f.buffer)));
+    const cover = stored[0]!;
+
     const design = await prisma.design.create({
       data: {
         tailorId: req.user!.sub,
         title: parsed.data.title,
         description: parsed.data.description,
         category: parsed.data.category,
-        imageUrl: image.url,
-        imageWidth: image.width,
-        imageHeight: image.height,
+        imageUrl: cover.url,
+        imageWidth: cover.width,
+        imageHeight: cover.height,
+        coverBlurhash: cover.blurhash,
+        mediaCount: stored.length,
+        media: {
+          create: stored.map((s, i) => ({
+            type: 'IMAGE' as const,
+            url: s.url,
+            width: s.width,
+            height: s.height,
+            blurhash: s.blurhash,
+            position: i,
+          })),
+        },
       },
       include: designInclude(req.user!.sub),
     });
