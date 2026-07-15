@@ -1,5 +1,6 @@
+import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { imageUri } from '../lib/config';
 import { colors, fonts, radius, spacing } from '../theme';
 import type { Design } from '../types';
@@ -9,18 +10,26 @@ type Props = {
   onPress: () => void;
 };
 
-// Carte façon Pinterest : l'image arrondie EST la carte, petit titre sobre dessous.
+// Carte façon Pinterest : image arrondie = la carte, placeholder flou, badge multi-média.
 export function DesignCard({ design, onPress }: Props) {
   const ratio = design.imageWidth / design.imageHeight;
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
-      <Image
-        testID="design-image"
-        source={{ uri: imageUri(design.imageUrl) }}
-        style={[styles.image, { aspectRatio: ratio }]}
-        contentFit="cover"
-        transition={180}
-      />
+      <View>
+        <Image
+          testID="design-image"
+          source={{ uri: imageUri(design.imageUrl) }}
+          placeholder={design.coverBlurhash ? { blurhash: design.coverBlurhash } : undefined}
+          style={[styles.image, { aspectRatio: ratio }]}
+          contentFit="cover"
+          transition={180}
+        />
+        {design.mediaCount > 1 ? (
+          <View testID="multi-indicator" style={styles.multi}>
+            <Feather name="copy" size={13} color={colors.textOnDark} />
+          </View>
+        ) : null}
+      </View>
       <Text style={styles.title} numberOfLines={1}>
         {design.title}
       </Text>
@@ -31,10 +40,17 @@ export function DesignCard({ design, onPress }: Props) {
 const styles = StyleSheet.create({
   card: { marginBottom: spacing.md },
   pressed: { opacity: 0.92 },
-  image: {
-    width: '100%',
-    borderRadius: radius.md,
-    backgroundColor: colors.inkElevated,
+  image: { width: '100%', borderRadius: radius.md, backgroundColor: colors.inkElevated },
+  multi: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(23,18,15,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     color: colors.textOnDark,

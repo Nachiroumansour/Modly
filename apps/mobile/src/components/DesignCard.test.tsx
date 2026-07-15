@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react-native';
 import { DesignCard } from './DesignCard';
 import type { Design } from '../types';
 
-const design: Design = {
+const base: Design = {
   id: 'd1',
   title: 'Boubou Tabaski',
   description: null,
@@ -23,20 +23,29 @@ const design: Design = {
 };
 
 describe('DesignCard', () => {
-  it('affiche l’image et un titre sobre (façon Pinterest, sans bandeau)', () => {
-    render(<DesignCard design={design} onPress={() => {}} />);
+  it('affiche l’image et un titre sobre (sans bandeau)', () => {
+    render(<DesignCard design={base} onPress={() => {}} />);
     expect(screen.getByTestId('design-image')).toBeTruthy();
     expect(screen.getByText('Boubou Tabaski')).toBeTruthy();
-    // Le nom du tailleur n'apparaît plus sur la tuile (il est sur le détail).
     expect(screen.queryByText('Atelier Awa')).toBeNull();
   });
 
   it('préserve le ratio réel de l’image (Pinterest)', () => {
-    render(<DesignCard design={design} onPress={() => {}} />);
+    render(<DesignCard design={base} onPress={() => {}} />);
     const image = screen.getByTestId('design-image');
     const flat = Array.isArray(image.props.style)
       ? Object.assign({}, ...image.props.style)
       : image.props.style;
     expect(flat.aspectRatio).toBeCloseTo(600 / 900);
+  });
+
+  it('affiche l’indicateur multi-média quand mediaCount > 1', () => {
+    render(<DesignCard design={{ ...base, mediaCount: 3 }} onPress={() => {}} />);
+    expect(screen.getByTestId('multi-indicator')).toBeTruthy();
+  });
+
+  it('n’affiche pas l’indicateur pour une seule image', () => {
+    render(<DesignCard design={base} onPress={() => {}} />);
+    expect(screen.queryByTestId('multi-indicator')).toBeNull();
   });
 });
