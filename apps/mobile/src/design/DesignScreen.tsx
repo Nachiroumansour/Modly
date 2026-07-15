@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/AuthContext';
+import { imageUri } from '../lib/config';
 import { colors, fonts, radius, spacing } from '../theme';
 import { Button } from '../ui/Button';
 import { ErrorRetry } from '../ui/ErrorRetry';
@@ -56,7 +57,7 @@ export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor }: P
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
         <Image
-          source={{ uri: design.imageUrl }}
+          source={{ uri: imageUri(design.imageUrl) }}
           style={[styles.image, { aspectRatio: design.imageWidth / design.imageHeight }]}
           contentFit="cover"
           transition={200}

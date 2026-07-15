@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../src/auth/AuthContext';
+import { imageUri } from '../../src/lib/config';
 import { formatPrice } from '../../src/orders/labels';
 import { StatusChip } from '../../src/orders/StatusChip';
 import { useOrders } from '../../src/orders/hooks';
@@ -75,7 +76,7 @@ function OrderRow({ order, showTailor, onPress }: { order: Order; showTailor: bo
   return (
     <Pressable style={styles.row} onPress={onPress}>
       {order.design ? (
-        <Image source={{ uri: order.design.imageUrl }} style={styles.thumb} contentFit="cover" />
+        <Image source={{ uri: imageUri(order.design.imageUrl) }} style={styles.thumb} contentFit="cover" />
       ) : (
         <View style={[styles.thumb, styles.thumbEmpty]}>
           <Feather name="scissors" size={20} color={colors.textOnDarkMuted} />

@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text } from 'react-native';
+import { imageUri } from '../lib/config';
 import { colors, fonts, radius, spacing } from '../theme';
 import type { Design } from '../types';
 
@@ -15,7 +16,7 @@ export function DesignCard({ design, onPress }: Props) {
     <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
       <Image
         testID="design-image"
-        source={{ uri: design.imageUrl }}
+        source={{ uri: imageUri(design.imageUrl) }}
         style={[styles.image, { aspectRatio: ratio }]}
         contentFit="cover"
         transition={180}

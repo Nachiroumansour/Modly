@@ -12,10 +12,7 @@ export interface ImageStorage {
 }
 
 class LocalDiskStorage implements ImageStorage {
-  constructor(
-    private baseUrl: string,
-    private dir: string,
-  ) {}
+  constructor(private dir: string) {}
 
   async save(buffer: Buffer): Promise<StoredImage> {
     let width: number | undefined;
@@ -34,7 +31,9 @@ class LocalDiskStorage implements ImageStorage {
     const fileName = `${randomUUID()}.webp`;
     await mkdir(this.dir, { recursive: true });
     await writeFile(path.join(this.dir, fileName), webp);
-    return { url: `${this.baseUrl}/uploads/${fileName}`, width, height };
+    // Chemin relatif : l'app le préfixe avec l'URL de l'API qu'elle détecte.
+    // Ainsi les images ne cassent pas quand l'IP LAN change.
+    return { url: `/uploads/${fileName}`, width, height };
   }
 }
 
@@ -58,9 +57,8 @@ function createStorage(): ImageStorage {
   if (process.env.CLOUDINARY_URL) {
     return new CloudinaryStorage();
   }
-  const baseUrl = process.env.PUBLIC_BASE_URL ?? 'http://localhost:3000';
   const dir = path.resolve(process.env.UPLOADS_DIR ?? './uploads');
-  return new LocalDiskStorage(baseUrl, dir);
+  return new LocalDiskStorage(dir);
 }
 
 export const storage: ImageStorage = createStorage();

@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/auth/AuthContext';
+import { imageUri } from '../../src/lib/config';
 import { useOrder, useOrderManage } from '../../src/orders/hooks';
 import { PAYMENT_LABELS, STATUS_LABELS, formatPrice, nextStatus } from '../../src/orders/labels';
 import { StatusChip } from '../../src/orders/StatusChip';
@@ -64,7 +65,7 @@ export default function OrderDetail() {
 
         <View style={styles.hero}>
           {order.design ? (
-            <Image source={{ uri: order.design.imageUrl }} style={styles.thumb} contentFit="cover" />
+            <Image source={{ uri: imageUri(order.design.imageUrl) }} style={styles.thumb} contentFit="cover" />
           ) : (
             <View style={[styles.thumb, styles.thumbEmpty]}>
               <Feather name="scissors" size={22} color={colors.textOnDarkMuted} />
