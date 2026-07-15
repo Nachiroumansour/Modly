@@ -4,8 +4,9 @@ import path from 'node:path';
 import { v2 as cloudinary } from 'cloudinary';
 import sharp from 'sharp';
 import { ApiError } from './errors.js';
+import { computeBlurhash } from './blurhash.js';
 
-export type StoredImage = { url: string; width: number; height: number };
+export type StoredImage = { url: string; width: number; height: number; blurhash: string };
 
 export interface ImageStorage {
   save(buffer: Buffer): Promise<StoredImage>;
@@ -31,14 +32,16 @@ class LocalDiskStorage implements ImageStorage {
     const fileName = `${randomUUID()}.webp`;
     await mkdir(this.dir, { recursive: true });
     await writeFile(path.join(this.dir, fileName), webp);
+    const blurhash = await computeBlurhash(buffer);
     // Chemin relatif : l'app le préfixe avec l'URL de l'API qu'elle détecte.
     // Ainsi les images ne cassent pas quand l'IP LAN change.
-    return { url: `/uploads/${fileName}`, width, height };
+    return { url: `/uploads/${fileName}`, width, height, blurhash };
   }
 }
 
 class CloudinaryStorage implements ImageStorage {
   async save(buffer: Buffer): Promise<StoredImage> {
+    const blurhash = await computeBlurhash(buffer);
     const result = await new Promise<{ secure_url: string; width: number; height: number }>(
       (resolve, reject) => {
         cloudinary.uploader
@@ -49,7 +52,7 @@ class CloudinaryStorage implements ImageStorage {
           .end(buffer);
       },
     );
-    return { url: result.secure_url, width: result.width, height: result.height };
+    return { url: result.secure_url, width: result.width, height: result.height, blurhash };
   }
 }
 
