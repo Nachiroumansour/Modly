@@ -124,3 +124,9 @@ export type Measurement = {
   source: MeasurementSource;
   createdAt: string;
 } & Partial<Record<MeasurementKey, number | null>>;
+
+export type SelfMeasurement = {
+  id: string;
+  source: MeasurementSource;
+  updatedAt: string;
+} & Partial<Record<MeasurementKey, number | null>>;
