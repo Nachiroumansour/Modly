@@ -32,6 +32,7 @@ model User {
   linkedRecords ClientRecord[] @relation("clientLinkedRecords")
   clientOrders  Order[]        @relation("clientOrders")
   tailorOrders  Order[]        @relation("tailorOrders")
+  selfMeasurement SelfMeasurement?
 
   @@map("users")
 }
@@ -211,6 +212,32 @@ model Measurement {
 
   @@index([clientRecordId])
   @@map("measurements")
+}
+
+model SelfMeasurement {
+  id              String            @id @default(cuid())
+  userId          String            @unique
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source          MeasurementSource @default(MANUELLE)
+  tourPoitrine    Float?
+  tourTaille      Float?
+  tourHanches     Float?
+  largeurEpaules  Float?
+  longueurBras    Float?
+  tourBras        Float?
+  tourCou         Float?
+  entrejambe      Float?
+  longueurJambe   Float?
+  longueurBoubou  Float?
+  longueurChemise Float?
+  tourCuisse      Float?
+  tourPoignet     Float?
+  carrureDos      Float?
+  longueurManche  Float?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("self_measurements")
 }
 
 enum OrderStatus {

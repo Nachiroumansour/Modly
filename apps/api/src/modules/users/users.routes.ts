@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
+import { measurementSchema } from '../client-records/client-records.service.js';
 import { designInclude, toApiDesign } from '../designs/designs.service.js';
 
 export const usersRouter = Router();
@@ -81,4 +82,22 @@ usersRouter.get('/me/measurements', requireAuth, requireRole('CLIENT'), async (r
       latestMeasurement: r.measurements[0] ?? null,
     })),
   });
+});
+
+usersRouter.get('/me/self-measurement', requireAuth, requireRole('CLIENT'), async (req, res) => {
+  const measurement = await prisma.selfMeasurement.findUnique({ where: { userId: req.user!.sub } });
+  res.json({ measurement });
+});
+
+usersRouter.put('/me/self-measurement', requireAuth, requireRole('CLIENT'), async (req, res) => {
+  const parsed = measurementSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new ApiError(400, 'DONNEES_INVALIDES', parsed.error.issues[0].message);
+  }
+  const measurement = await prisma.selfMeasurement.upsert({
+    where: { userId: req.user!.sub },
+    create: { userId: req.user!.sub, ...parsed.data },
+    update: parsed.data,
+  });
+  res.json({ measurement });
 });
