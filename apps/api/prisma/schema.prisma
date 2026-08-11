@@ -33,6 +33,7 @@ model User {
   clientOrders  Order[]        @relation("clientOrders")
   tailorOrders  Order[]        @relation("tailorOrders")
   selfMeasurement SelfMeasurement?
+  collections   Collection[]
 
   @@map("users")
 }
@@ -126,15 +127,30 @@ model Like {
 }
 
 model Bookmark {
-  id        String   @id @default(cuid())
-  userId    String
-  designId  String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  design    Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id           String      @id @default(cuid())
+  userId       String
+  designId     String
+  collectionId String?
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  design       Design      @relation(fields: [designId], references: [id], onDelete: Cascade)
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
 
   @@unique([userId, designId])
   @@map("bookmarks")
+}
+
+model Collection {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime   @default(now())
+  bookmarks Bookmark[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("collections")
 }
 
 model Comment {
