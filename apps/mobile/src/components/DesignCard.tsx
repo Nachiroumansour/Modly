@@ -8,13 +8,14 @@ import type { Design } from '../types';
 type Props = {
   design: Design;
   onPress: () => void;
+  onLongPress?: () => void;
 };
 
 // Carte façon Pinterest : image arrondie = la carte, placeholder flou, badge multi-média.
-export function DesignCard({ design, onPress }: Props) {
+export function DesignCard({ design, onPress, onLongPress }: Props) {
   const ratio = design.imageWidth / design.imageHeight;
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+    <Pressable onPress={onPress} onLongPress={onLongPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
       <View>
         <Image
           testID="design-image"

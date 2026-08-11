@@ -1,7 +1,10 @@
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CollectionPickerSheet } from '../src/collections/CollectionPickerSheet';
+import { useCollections, useCreateCollection, useMoveBookmark } from '../src/collections/hooks';
 import { MasonryColumns } from '../src/feed/masonry';
 import { useBookmarks } from '../src/feed/useBookmarks';
 import { colors, fonts, spacing } from '../src/theme';
@@ -10,6 +13,26 @@ export default function SavedAll() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { designs, isLoading } = useBookmarks();
+  const { collections } = useCollections();
+  const { move } = useMoveBookmark();
+  const { create } = useCreateCollection();
+  const [target, setTarget] = useState<string | null>(null);
+
+  function pick(collectionId: string | null) {
+    if (target) move(target, collectionId);
+    setTarget(null);
+  }
+  async function createAndFile(name: string) {
+    if (!target) return;
+    const designId = target;
+    setTarget(null);
+    try {
+      const res = await create(name);
+      await move(designId, res.collection.id);
+    } catch {
+      // nom déjà pris : ignoré
+    }
+  }
 
   return (
     <View style={styles.root}>
@@ -33,10 +56,25 @@ export default function SavedAll() {
           {designs.length === 0 ? (
             <Text style={styles.empty}>Touche le marque-page sur un modèle pour le retrouver ici.</Text>
           ) : (
-            <MasonryColumns designs={designs} onOpen={(id) => router.push(`/design/${id}`)} />
+            <>
+              <Text style={styles.hint}>Appui long sur un modèle pour le ranger dans une collection.</Text>
+              <MasonryColumns
+                designs={designs}
+                onOpen={(id) => router.push(`/design/${id}`)}
+                onLongPress={(id) => setTarget(id)}
+              />
+            </>
           )}
         </ScrollView>
       )}
+
+      <CollectionPickerSheet
+        visible={Boolean(target)}
+        onClose={() => setTarget(null)}
+        collections={collections}
+        onPick={pick}
+        onCreate={createAndFile}
+      />
     </View>
   );
 }
@@ -52,6 +90,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
   },
   title: { color: colors.textOnDark, fontFamily: fonts.bodyHeavy, fontSize: 17 },
+  hint: {
+    color: colors.textOnDarkMuted,
+    fontFamily: fonts.bodyRegular,
+    fontSize: 12,
+    paddingHorizontal: spacing.xs,
+    marginBottom: spacing.md,
+  },
   empty: {
     color: colors.textOnDarkMuted,
     fontFamily: fonts.bodyRegular,
