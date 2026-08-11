@@ -53,6 +53,8 @@ export type Feed = {
   hasMore: boolean;
 };
 
+export type CollectionSummary = { id: string; name: string; count: number; covers: string[] };
+
 export type Comment = {
   id: string;
   text: string;
