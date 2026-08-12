@@ -55,6 +55,8 @@ export type Feed = {
 
 export type CollectionSummary = { id: string; name: string; count: number; covers: string[] };
 
+export type FeedPage = { designs: Design[]; nextCursor: string | null };
+
 export type Comment = {
   id: string;
   text: string;
