@@ -63,16 +63,16 @@ type PushPayload = { title: string; body: string; data?: Record<string, unknown>
 const PUSH_ENDPOINT = 'https://exp.host/--/api/v2/push/send';
 
 export async function sendPush(recipientId: string, payload: PushPayload): Promise<void> {
-  const tokens = await prisma.pushToken.findMany({ where: { userId: recipientId }, select: { token: true } });
-  if (tokens.length === 0) return; // no-op : aucun appareil enregistre
-  const messages = tokens.map((t) => ({
-    to: t.token,
-    title: payload.title,
-    body: payload.body,
-    data: payload.data ?? {},
-    sound: 'default',
-  }));
   try {
+    const tokens = await prisma.pushToken.findMany({ where: { userId: recipientId }, select: { token: true } });
+    if (tokens.length === 0) return; // no-op : aucun appareil enregistre
+    const messages = tokens.map((t) => ({
+      to: t.token,
+      title: payload.title,
+      body: payload.body,
+      data: payload.data ?? {},
+      sound: 'default',
+    }));
     const res = await fetch(PUSH_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
