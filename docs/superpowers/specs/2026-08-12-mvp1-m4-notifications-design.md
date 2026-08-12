@@ -119,7 +119,7 @@ Aujourd'hui `PATCH /:id/status` est réservé au tailleur ; le client ne peut pa
 
 - **Route** `PATCH /orders/:id/cancel` (`requireRole('CLIENT')`).
 - Le client doit être le propriétaire (`order.clientId === user.sub`), sinon 404 `INTROUVABLE`.
-- Autorisé uniquement si la commande est **encore annulable** : statut `EN_ATTENTE` (avant que le tailleur ait commencé). Sinon 409 `ANNULATION_IMPOSSIBLE`. (`assertTransition` de la machine à états est réutilisé : `EN_ATTENTE → ANNULEE` est déjà valide.)
+- Autorisé **avant la coupe du tissu** : uniquement si le statut est `EN_ATTENTE` ou `TISSU_RECU`. Dès `COUPE` (tissu taillé, matière engagée) et au-delà → 409 `ANNULATION_IMPOSSIBLE` (« Cette commande est trop avancée pour être annulée. »). Constante `CLIENT_CANCELLABLE = ['EN_ATTENTE', 'TISSU_RECU']` dans `orders.service.ts`. (`assertTransition` reste valide pour la transition `→ ANNULEE` mais la borne « avant la coupe » est un contrôle **supplémentaire propre au client** — le tailleur, lui, garde le droit d'annuler depuis n'importe quel statut non terminal.)
 - Effet : passe `status = ANNULEE`, crée un `OrderEvent { status: ANNULEE, note }`, puis notifie le tailleur (type ORDER).
 - Idempotent : si déjà `ANNULEE`, renvoyer la commande sans re-notifier.
 
@@ -174,7 +174,7 @@ Dépendance nouvelle : `expo-notifications` (compatible SDK 54).
 - Follow → notif ; refollow après unfollow ne crée pas de 2e ligne (même groupe).
 - Pas d'auto-notification (liker/commenter son propre modèle).
 - Nouvelle commande → notif tailleur ; changement de statut → notif client.
-- Annulation client : EN_ATTENTE → ANNULEE ok + notif tailleur ; statut avancé → 409 ; non-propriétaire → 404 ; idempotence (déjà annulée).
+- Annulation client : `EN_ATTENTE` → ANNULEE ok + notif tailleur ; `TISSU_RECU` → ANNULEE ok ; `COUPE` (et au-delà) → 409 `ANNULATION_IMPOSSIBLE` ; non-propriétaire → 404 ; idempotence (déjà annulée).
 - `unread-count`, `read-all`, `:id/read` (propriété).
 - `sendPush` no-op sans token (mock fetch : non appelé) ; appelé avec token (fetch mocké).
 - Enregistrement/suppression de push token (upsert, ré-attribution).
