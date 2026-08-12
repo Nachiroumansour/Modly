@@ -64,6 +64,18 @@ export type Comment = {
   user: ApiUser;
 };
 
+export type ApiComment = {
+  id: string;
+  text: string;
+  createdAt: string;
+  parentId: string | null;
+  pinned: boolean;
+  likesCount: number;
+  likedByMe: boolean;
+  user: ApiUser;
+  replies: ApiComment[];
+};
+
 export type DesignDetail = {
   design: Design;
   comments: Comment[];

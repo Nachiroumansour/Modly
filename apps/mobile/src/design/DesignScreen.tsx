@@ -26,7 +26,7 @@ type Props = {
 export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor, onOpenDesign }: Props) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { design, comments, isLoading, isError, refetch } = useDesign(id);
+  const { design, isLoading, isError, refetch } = useDesign(id);
   const { designs: similar } = useSimilar(id);
   const actions = useDesignActions(id);
   const authed = Boolean(user);
@@ -116,11 +116,9 @@ export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor, onO
       <CommentsSheet
         visible={commentsOpen}
         onClose={() => setCommentsOpen(false)}
-        comments={comments}
-        commentText={actions.commentText}
-        setCommentText={actions.setCommentText}
-        submitComment={actions.submitComment}
-        commenting={actions.commenting}
+        designId={id}
+        viewerId={user?.id ?? ''}
+        designTailorId={design.tailor.id}
         authed={authed}
         onRequireAuth={gate}
       />
