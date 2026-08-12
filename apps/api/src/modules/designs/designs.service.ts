@@ -126,17 +126,81 @@ export async function removeReaction(
   }
 }
 
-export async function addComment(userId: string, designId: string, text: string) {
+type CommentWithRels = {
+  id: string;
+  text: string;
+  createdAt: Date;
+  parentId: string | null;
+  pinned: boolean;
+  likesCount: number;
+  user: { id: string; name: string; avatarUrl: string | null };
+  likes: { id: string }[];
+  replies?: CommentWithRels[];
+};
+
+export type ApiComment = {
+  id: string;
+  text: string;
+  createdAt: Date;
+  parentId: string | null;
+  pinned: boolean;
+  likesCount: number;
+  likedByMe: boolean;
+  user: { id: string; name: string; avatarUrl: string | null };
+  replies: ApiComment[];
+};
+
+export function toApiComment(c: CommentWithRels): ApiComment {
+  return {
+    id: c.id,
+    text: c.text,
+    createdAt: c.createdAt,
+    parentId: c.parentId,
+    pinned: c.pinned,
+    likesCount: c.likesCount,
+    likedByMe: c.likes.length > 0,
+    user: c.user,
+    replies: (c.replies ?? []).map(toApiComment),
+  };
+}
+
+export async function addComment(userId: string, designId: string, text: string, parentId?: string) {
   await ensureDesignExists(designId);
+  if (parentId) {
+    const parent = await prisma.comment.findFirst({ where: { id: parentId, designId } });
+    if (!parent || parent.parentId) {
+      throw new ApiError(400, 'REPONSE_INVALIDE', 'Réponse invalide.');
+    }
+  }
   const [comment] = await prisma.$transaction([
     prisma.comment.create({
-      data: { userId, designId, text },
-      include: { user: { select: publicUserSelect } },
+      data: { userId, designId, text, parentId: parentId ?? null },
+      include: {
+        user: { select: publicUserSelect },
+        likes: { where: { userId }, select: { id: true } },
+      },
     }),
-    prisma.design.update({
-      where: { id: designId },
-      data: { commentsCount: { increment: 1 } },
-    }),
+    prisma.design.update({ where: { id: designId }, data: { commentsCount: { increment: 1 } } }),
   ]);
-  return comment;
+  return toApiComment({ ...comment, replies: [] });
+}
+
+export async function getThreadedComments(designId: string, viewerId: string) {
+  const roots = await prisma.comment.findMany({
+    where: { designId, parentId: null },
+    orderBy: [{ pinned: 'desc' }, { createdAt: 'asc' }],
+    take: 200,
+    include: {
+      user: { select: publicUserSelect },
+      likes: { where: { userId: viewerId }, select: { id: true } },
+      replies: {
+        orderBy: { createdAt: 'asc' },
+        include: {
+          user: { select: publicUserSelect },
+          likes: { where: { userId: viewerId }, select: { id: true } },
+        },
+      },
+    },
+  });
+  return roots.map((r) => toApiComment(r));
 }

@@ -11,6 +11,7 @@ import {
   addReaction,
   designInclude,
   ensureDesignExists,
+  getThreadedComments,
   removeReaction,
   getSimilarDesigns,
   toApiDesign,
@@ -43,6 +44,7 @@ const feedQuerySchema = z.object({
 
 const commentSchema = z.object({
   text: z.string().min(1, 'Le commentaire ne peut pas être vide.').max(500),
+  parentId: z.string().optional(),
 });
 
 designsRouter.get('/', optionalAuth, async (req, res) => {
@@ -188,19 +190,14 @@ designsRouter.post('/:id/comments', requireAuth, async (req, res) => {
     req.user!.sub,
     req.params.id as string,
     parsed.data.text,
+    parsed.data.parentId,
   );
   res.status(201).json({ comment });
 });
 
-designsRouter.get('/:id/comments', async (req, res) => {
+designsRouter.get('/:id/comments', optionalAuth, async (req, res) => {
   await ensureDesignExists(req.params.id as string);
-  const comments = await prisma.comment.findMany({
-    where: { designId: req.params.id as string },
-    orderBy: { createdAt: 'asc' },
-    take: 100,
-    include: { user: { select: { id: true, name: true, avatarUrl: true } } },
-  });
-  res.json({ comments });
+  res.json({ comments: await getThreadedComments(req.params.id as string, req.user?.sub ?? '') });
 });
 
 designsRouter.get('/:id/similar', optionalAuth, async (req, res) => {
