@@ -34,6 +34,7 @@ model User {
   tailorOrders  Order[]        @relation("tailorOrders")
   selfMeasurement SelfMeasurement?
   collections   Collection[]
+  commentLikes  CommentLike[]
 
   @@map("users")
 }
@@ -154,16 +155,35 @@ model Collection {
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  userId    String
-  designId  String
-  text      String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  design    Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id         String        @id @default(cuid())
+  userId     String
+  designId   String
+  text       String
+  parentId   String?
+  likesCount Int           @default(0)
+  pinned     Boolean       @default(false)
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  design     Design        @relation(fields: [designId], references: [id], onDelete: Cascade)
+  parent     Comment?      @relation("replies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Comment[]     @relation("replies")
+  likes      CommentLike[]
+  createdAt  DateTime      @default(now())
 
   @@index([designId])
   @@map("comments")
+}
+
+model CommentLike {
+  id        String   @id @default(cuid())
+  userId    String
+  commentId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, commentId])
+  @@index([commentId])
+  @@map("comment_likes")
 }
 
 model Follow {
