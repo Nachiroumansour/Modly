@@ -6,6 +6,16 @@ import type { Design } from '../types';
 
 jest.mock('./useDesign');
 jest.mock('./useSimilar');
+jest.mock('./useComments', () => ({
+  useComments: () => ({
+    comments: [],
+    isLoading: false,
+    post: jest.fn(),
+    toggleLike: jest.fn(),
+    remove: jest.fn(),
+    togglePin: jest.fn(),
+  }),
+}));
 jest.mock('../auth/AuthContext', () => ({ useAuth: () => ({ user: { id: 'u1' }, token: 't' }) }));
 jest.mock('./useDesignActions', () => ({
   useDesignActions: () => ({
