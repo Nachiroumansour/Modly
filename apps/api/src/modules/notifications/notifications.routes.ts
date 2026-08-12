@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 import { requireAuth } from '../../middleware/auth.js';
@@ -56,5 +57,26 @@ notificationsRouter.post('/:id/read', async (req, res) => {
     throw new ApiError(404, 'INTROUVABLE', 'Notification introuvable.');
   }
   await prisma.notification.update({ where: { id }, data: { read: true } });
+  res.json({ ok: true });
+});
+
+export const pushTokensRouter = Router();
+pushTokensRouter.use(requireAuth);
+
+const tokenSchema = z.object({ token: z.string().min(1).max(300) });
+
+pushTokensRouter.post('/', async (req, res) => {
+  const parsed = tokenSchema.safeParse(req.body);
+  if (!parsed.success) throw new ApiError(400, 'DONNEES_INVALIDES', 'Jeton invalide.');
+  await prisma.pushToken.upsert({
+    where: { token: parsed.data.token },
+    create: { token: parsed.data.token, userId: req.user!.sub },
+    update: { userId: req.user!.sub },
+  });
+  res.json({ ok: true });
+});
+
+pushTokensRouter.delete('/:token', async (req, res) => {
+  await prisma.pushToken.deleteMany({ where: { token: req.params.token as string, userId: req.user!.sub } });
   res.json({ ok: true });
 });
