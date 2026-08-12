@@ -4,6 +4,7 @@ import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 import { optionalAuth, requireAuth } from '../../middleware/auth.js';
 import { designInclude, toApiDesign } from '../designs/designs.service.js';
+import { createNotification } from '../notifications/notifications.service.js';
 
 export const tailorsRouter = Router();
 
@@ -25,6 +26,12 @@ tailorsRouter.post('/:id/follow', requireAuth, async (req, res) => {
   await ensureTailorExists(tailorId);
   try {
     await prisma.follow.create({ data: { followerId: req.user!.sub, tailorId } });
+    await createNotification({
+      recipientId: tailorId,
+      actorId: req.user!.sub,
+      type: 'FOLLOW',
+      groupKey: 'follow',
+    });
   } catch (err) {
     if (!(err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002')) {
       throw err;

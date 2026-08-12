@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
+import { createNotification } from '../notifications/notifications.service.js';
 
 export const publicUserSelect = { id: true, name: true, avatarUrl: true } as const;
 
@@ -106,6 +107,18 @@ export async function addReaction(
     }
     throw err;
   }
+  if (kind === 'like') {
+    const design = await prisma.design.findUnique({ where: { id: designId }, select: { tailorId: true } });
+    if (design) {
+      await createNotification({
+        recipientId: design.tailorId,
+        actorId: userId,
+        type: 'LIKE',
+        groupKey: `design:${designId}`,
+        designId,
+      });
+    }
+  }
 }
 
 export async function removeReaction(
@@ -182,6 +195,29 @@ export async function addComment(userId: string, designId: string, text: string,
     }),
     prisma.design.update({ where: { id: designId }, data: { commentsCount: { increment: 1 } } }),
   ]);
+  const design = await prisma.design.findUnique({ where: { id: designId }, select: { tailorId: true } });
+  if (parentId) {
+    const parent = await prisma.comment.findUnique({ where: { id: parentId }, select: { userId: true } });
+    if (parent) {
+      await createNotification({
+        recipientId: parent.userId,
+        actorId: userId,
+        type: 'REPLY',
+        groupKey: `reply:${comment.id}`,
+        designId,
+        commentId: comment.id,
+      });
+    }
+  } else if (design) {
+    await createNotification({
+      recipientId: design.tailorId,
+      actorId: userId,
+      type: 'COMMENT',
+      groupKey: `comment:${comment.id}`,
+      designId,
+      commentId: comment.id,
+    });
+  }
   return toApiComment({ ...comment, replies: [] });
 }
 
