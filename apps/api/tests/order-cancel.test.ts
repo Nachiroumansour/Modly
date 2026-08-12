@@ -59,4 +59,21 @@ describe('PATCH /orders/:id/cancel (client)', () => {
     expect((await request(app).patch(`/orders/${id}/cancel`).set(auth(autre.token))).status).toBe(404);
     expect((await request(app).patch(`/orders/${id}/cancel`).set(auth(tailor.token))).status).toBe(403);
   });
+
+  it('est idempotente : un second appel ne recrée ni événement ni notification', async () => {
+    const id = await makeOrder('EN_ATTENTE');
+    const first = await request(app).patch(`/orders/${id}/cancel`).set(auth(client.token));
+    expect(first.status).toBe(200);
+    const countAfterFirst = await prisma.notification.count({
+      where: { recipientId: tailor.user.id, type: 'ORDER' },
+    });
+    const second = await request(app).patch(`/orders/${id}/cancel`).set(auth(client.token));
+    expect(second.status).toBe(200);
+    expect(second.body.order.status).toBe('ANNULEE');
+    const events = await prisma.orderEvent.findMany({ where: { orderId: id, status: 'ANNULEE' } });
+    expect(events).toHaveLength(1);
+    expect(
+      await prisma.notification.count({ where: { recipientId: tailor.user.id, type: 'ORDER' } }),
+    ).toBe(countAfterFirst);
+  });
 });
