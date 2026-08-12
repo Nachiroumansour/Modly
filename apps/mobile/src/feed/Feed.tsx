@@ -10,14 +10,15 @@ import {
 import { colors, fonts, spacing } from '../theme';
 import { ErrorRetry } from '../ui/ErrorRetry';
 import { MasonryColumns } from './masonry';
-import { useFeed } from './useFeed';
+import { useFeed, type FeedScope } from './useFeed';
 
 type FeedProps = {
   onOpenDesign?: (id: string) => void;
+  scope?: FeedScope;
 };
 
-export function Feed({ onOpenDesign }: FeedProps = {}) {
-  const { designs, isLoading, isError, hasMore, refetch, loadMore } = useFeed();
+export function Feed({ onOpenDesign, scope = 'foryou' }: FeedProps = {}) {
+  const { designs, isLoading, isError, hasMore, refetch, loadMore } = useFeed(scope);
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
     const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
@@ -51,7 +52,11 @@ export function Feed({ onOpenDesign }: FeedProps = {}) {
       showsVerticalScrollIndicator={false}
     >
       {designs.length === 0 ? (
-        <Text style={styles.empty}>Aucun modèle pour l'instant.</Text>
+        <Text style={styles.empty}>
+          {scope === 'following'
+            ? 'Suis des tailleurs pour voir leurs nouveautés ici.'
+            : "Aucun modèle pour l'instant."}
+        </Text>
       ) : (
         <MasonryColumns designs={designs} onOpen={(id) => onOpenDesign?.(id)} />
       )}
