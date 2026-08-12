@@ -50,3 +50,21 @@ describe('déclencheurs sociaux', () => {
     expect(await prisma.notification.count({ where: { recipientId: tailor.user.id } })).toBe(0);
   });
 });
+
+describe('déclencheurs commande', () => {
+  it('une nouvelle commande notifie le tailleur', async () => {
+    await request(app).post('/orders').set(auth(client.token)).send({ tailorId: tailor.user.id, designId });
+    const n = await prisma.notification.findMany({ where: { recipientId: tailor.user.id, type: 'ORDER' } });
+    expect(n).toHaveLength(1);
+    expect(n[0].lastActorId).toBe(client.user.id);
+  });
+
+  it('un changement de statut notifie le client', async () => {
+    const created = await request(app).post('/orders').set(auth(client.token)).send({ tailorId: tailor.user.id, designId });
+    const orderId = created.body.order.id;
+    await request(app).patch(`/orders/${orderId}/status`).set(auth(tailor.token)).send({ status: 'TISSU_RECU' });
+    const n = await prisma.notification.findMany({ where: { recipientId: client.user.id, type: 'ORDER' } });
+    expect(n.length).toBeGreaterThanOrEqual(1);
+    expect(n.some((x) => x.orderId === orderId)).toBe(true);
+  });
+});

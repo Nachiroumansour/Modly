@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
+import { createNotification } from '../notifications/notifications.service.js';
 import {
   assertTailor,
   assertTransition,
@@ -46,6 +47,14 @@ ordersRouter.post('/', requireRole('CLIENT'), async (req, res) => {
       note: parsed.data.note,
       events: { create: { status: 'EN_ATTENTE' } },
     },
+  });
+  await createNotification({
+    recipientId: parsed.data.tailorId,
+    actorId: req.user!.sub,
+    type: 'ORDER',
+    groupKey: `order:${order.id}:EN_ATTENTE`,
+    orderId: order.id,
+    designId: parsed.data.designId ?? null,
   });
   res.status(201).json({ order });
 });
@@ -135,6 +144,13 @@ ordersRouter.patch('/:id/status', requireRole('TAILLEUR'), async (req, res) => {
   const withEvents = await prisma.order.findUnique({
     where: { id: updated.id },
     include: { events: { orderBy: { createdAt: 'asc' } } },
+  });
+  await createNotification({
+    recipientId: order.clientId,
+    actorId: req.user!.sub,
+    type: 'ORDER',
+    groupKey: `order:${order.id}:${parsed.data.status}`,
+    orderId: order.id,
   });
   res.json({ order: withEvents });
 });
