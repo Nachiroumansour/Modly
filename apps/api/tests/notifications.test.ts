@@ -102,3 +102,27 @@ describe('GET /me/notifications', () => {
     expect((await request(app).get('/me/notifications')).status).toBe(401);
   });
 });
+
+describe('POST /me/notifications/:id/read', () => {
+  it("refuse (404) si l'appelant n'est pas le destinataire", async () => {
+    const tailor = await registerUser(app, 'TAILLEUR', '+221770010011');
+    const awa = await registerUser(app, 'CLIENT', '+221770010012');
+    const intrus = await registerUser(app, 'CLIENT', '+221770010013');
+    const design = await prisma.design.create({
+      data: { tailorId: tailor.user.id, title: 'B', category: 'BOUBOU', imageUrl: 'http://x/o.webp', imageWidth: 600, imageHeight: 800 },
+    });
+    await createNotification({ recipientId: tailor.user.id, actorId: awa.user.id, type: 'LIKE', groupKey: `design:${design.id}`, designId: design.id });
+    const notif = await prisma.notification.findFirstOrThrow({ where: { recipientId: tailor.user.id } });
+
+    const res = await request(app).post(`/me/notifications/${notif.id}/read`).set(auth(intrus.token));
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('INTROUVABLE');
+  });
+
+  it('renvoie 404 pour un id inexistant', async () => {
+    const tailor = await registerUser(app, 'TAILLEUR', '+221770010014');
+    const res = await request(app).post('/me/notifications/id-inexistant/read').set(auth(tailor.token));
+    expect(res.status).toBe(404);
+    expect(res.body.error.code).toBe('INTROUVABLE');
+  });
+});
