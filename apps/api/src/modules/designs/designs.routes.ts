@@ -35,8 +35,10 @@ const feedQuerySchema = z.object({
   category: z.enum(DESIGN_CATEGORIES).optional(),
   search: z.string().min(1).max(80).optional(),
   sort: z.enum(['recent', 'tendance']).default('recent'),
-  page: z.coerce.number().int().min(1).default(1),
+  page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(20),
+  cursor: z.string().optional(),
+  following: z.string().optional(),
 });
 
 const commentSchema = z.object({
@@ -48,9 +50,15 @@ designsRouter.get('/', optionalAuth, async (req, res) => {
   if (!parsed.success) {
     throw new ApiError(400, 'DONNEES_INVALIDES', parsed.error.issues[0].message);
   }
-  const { category, search, sort, page, limit } = parsed.data;
+  const { category, search, sort, page, limit, cursor, following } = parsed.data;
   const viewerId = req.user?.sub ?? '';
-  const where = {
+  const isFollowing = following === '1';
+
+  if (isFollowing && !req.user) {
+    throw new ApiError(401, 'NON_AUTHENTIFIE', 'Connecte-toi pour voir tes abonnements.');
+  }
+
+  const where: Record<string, unknown> = {
     ...(category ? { category } : {}),
     ...(search
       ? {
@@ -61,23 +69,40 @@ designsRouter.get('/', optionalAuth, async (req, res) => {
         }
       : {}),
   };
-  const orderBy =
-    sort === 'tendance'
-      ? [{ likesCount: 'desc' as const }, { id: 'desc' as const }]
-      : [{ id: 'desc' as const }];
+  if (isFollowing) {
+    const follows = await prisma.follow.findMany({
+      where: { followerId: viewerId },
+      select: { tailorId: true },
+    });
+    where.tailorId = { in: follows.map((f) => f.tailorId) };
+  }
+
+  if (page !== undefined) {
+    const orderBy =
+      sort === 'tendance'
+        ? [{ likesCount: 'desc' as const }, { id: 'desc' as const }]
+        : [{ id: 'desc' as const }];
+    const rows = await prisma.design.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit + 1,
+      include: designInclude(viewerId),
+    });
+    const hasMore = rows.length > limit;
+    res.json({ designs: rows.slice(0, limit).map(toApiDesign), page, hasMore });
+    return;
+  }
+
   const rows = await prisma.design.findMany({
     where,
-    orderBy,
-    skip: (page - 1) * limit,
+    orderBy: [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
     take: limit + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     include: designInclude(viewerId),
   });
-  const hasMore = rows.length > limit;
-  res.json({
-    designs: rows.slice(0, limit).map(toApiDesign),
-    page,
-    hasMore,
-  });
+  const nextCursor = rows.length > limit ? rows[limit - 1].id : null;
+  res.json({ designs: rows.slice(0, limit).map(toApiDesign), nextCursor });
 });
 
 designsRouter.post(
