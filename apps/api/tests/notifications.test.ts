@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/app.js';
 import { prisma } from '../src/lib/prisma.js';
 import { registerUser } from './helpers.js';
-import { createNotification } from '../src/modules/notifications/notifications.service.js';
+import { createNotification, sendPush } from '../src/modules/notifications/notifications.service.js';
 
 const app = createApp();
 
@@ -49,5 +49,24 @@ describe('createNotification (regroupement)', () => {
     await createNotification({ recipientId: tailorId, actorId: awaId, type: 'COMMENT', groupKey: 'comment:c2', designId, commentId: 'c2' });
     const count = await prisma.notification.count({ where: { recipientId: tailorId } });
     expect(count).toBe(2);
+  });
+});
+
+describe('sendPush (best-effort)', () => {
+  it('no-op quand le destinataire n\'a aucun jeton (fetch non appele)', async () => {
+    const spy = vi.spyOn(globalThis, 'fetch');
+    await sendPush(tailorId, { title: 'x', body: 'y' });
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it('poste vers Expo quand un jeton existe', async () => {
+    await prisma.pushToken.create({ data: { userId: tailorId, token: 'ExponentPushToken[abc]' } });
+    const spy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ data: [{ status: 'ok' }] }), { status: 200 }),
+    );
+    await sendPush(tailorId, { title: 'Titre', body: 'Corps', data: { type: 'LIKE' } });
+    expect(spy).toHaveBeenCalledWith('https://exp.host/--/api/v2/push/send', expect.objectContaining({ method: 'POST' }));
+    spy.mockRestore();
   });
 });
