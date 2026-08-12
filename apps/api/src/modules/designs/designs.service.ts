@@ -9,6 +9,7 @@ export function designInclude(viewerId: string) {
     tailor: { select: publicUserSelect },
     likes: { where: { userId: viewerId }, select: { id: true } },
     bookmarks: { where: { userId: viewerId }, select: { id: true } },
+    media: { orderBy: { position: 'asc' as const } },
   } satisfies Prisma.DesignInclude;
 }
 
@@ -17,8 +18,51 @@ type DesignWithViewer = Prisma.DesignGetPayload<{
 }>;
 
 export function toApiDesign(design: DesignWithViewer) {
-  const { likes, bookmarks, ...rest } = design;
-  return { ...rest, likedByMe: likes.length > 0, bookmarkedByMe: bookmarks.length > 0 };
+  const { likes, bookmarks, media, ...rest } = design;
+  return {
+    ...rest,
+    media: media.map((m) => ({
+      id: m.id,
+      type: m.type,
+      url: m.url,
+      thumbnailUrl: m.thumbnailUrl,
+      width: m.width,
+      height: m.height,
+      duration: m.duration,
+      blurhash: m.blurhash,
+      position: m.position,
+    })),
+    likedByMe: likes.length > 0,
+    bookmarkedByMe: bookmarks.length > 0,
+  };
+}
+
+export async function getSimilarDesigns(designId: string, viewerId: string, limit: number) {
+  const current = await prisma.design.findUnique({
+    where: { id: designId },
+    select: { id: true, tailorId: true, category: true },
+  });
+  if (!current) {
+    throw new ApiError(404, 'INTROUVABLE', 'Modèle introuvable.');
+  }
+  const sameTailor = await prisma.design.findMany({
+    where: { tailorId: current.tailorId, id: { not: current.id } },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    include: designInclude(viewerId),
+  });
+  const excludeIds = [current.id, ...sameTailor.map((d) => d.id)];
+  const remaining = limit - sameTailor.length;
+  const sameCategory =
+    remaining > 0
+      ? await prisma.design.findMany({
+          where: { category: current.category, id: { notIn: excludeIds } },
+          orderBy: { createdAt: 'desc' },
+          take: remaining,
+          include: designInclude(viewerId),
+        })
+      : [];
+  return [...sameTailor, ...sameCategory].map(toApiDesign);
 }
 
 export async function ensureDesignExists(designId: string): Promise<void> {

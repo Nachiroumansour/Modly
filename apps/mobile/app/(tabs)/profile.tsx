@@ -1,68 +1,85 @@
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/auth/AuthContext';
+import { ProfileHero } from '../../src/profile/ProfileHero';
+import { TailorProfileBody } from '../../src/profile/TailorProfileBody';
+import { useTailorProfile } from '../../src/tailors/hooks';
 import { colors, fonts, radius, spacing } from '../../src/theme';
+import { AppHeader } from '../../src/ui/AppHeader';
 
 type FeatherName = keyof typeof Feather.glyphMap;
 
 export default function ProfileTab() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const { tailor, designs } = useTailorProfile(user?.role === 'TAILLEUR' ? (user.id as string) : '');
 
   if (!user) {
     return (
-      <View style={[styles.root, styles.guest, { paddingTop: insets.top }]}>
-        <View style={styles.guestInner}>
-          <Text style={styles.guestTitle}>Rejoins Moodly</Text>
-          <Text style={styles.guestText}>
-            Crée ton compte pour commander, sauvegarder tes modèles préférés et suivre tes tailleurs.
-          </Text>
-          <Pressable style={styles.primary} onPress={() => router.push('/(auth)/register')}>
-            <Text style={styles.primaryText}>Créer un compte</Text>
-          </Pressable>
-          <Pressable style={styles.ghost} onPress={() => router.push('/(auth)/login')}>
-            <Text style={styles.ghostText}>J'ai déjà un compte</Text>
-          </Pressable>
+      <View style={styles.outer}>
+        <AppHeader />
+        <View style={[styles.root, styles.guest]}>
+          <View style={styles.guestInner}>
+            <Text style={styles.guestTitle}>Rejoins Moodly</Text>
+            <Text style={styles.guestText}>
+              Crée ton compte pour commander, sauvegarder tes modèles préférés et suivre tes tailleurs.
+            </Text>
+            <Pressable style={styles.primary} onPress={() => router.push('/(auth)/register')}>
+              <Text style={styles.primaryText}>Créer un compte</Text>
+            </Pressable>
+            <Pressable style={styles.ghost} onPress={() => router.push('/(auth)/login')}>
+              <Text style={styles.ghostText}>J'ai déjà un compte</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     );
   }
 
-  const initial = user.name.trim().charAt(0).toUpperCase();
-  const roleLabel = user.role === 'TAILLEUR' ? 'Tailleur' : 'Client';
-
   return (
-    <ScrollView style={styles.root} contentContainerStyle={{ paddingTop: insets.top + spacing.xl, paddingBottom: 110 }}>
-      <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{initial}</Text>
-        </View>
-        <Text style={styles.name}>{user.name}</Text>
-        <View style={styles.roleChip}>
-          <Feather name={user.role === 'TAILLEUR' ? 'scissors' : 'user'} size={13} color={colors.accent} />
-          <Text style={styles.roleText}>{roleLabel}</Text>
-        </View>
-      </View>
-
-      <View style={styles.list}>
-        <Row icon="edit-3" label="Modifier le profil" soon />
+    <View style={styles.outer}>
+      <AppHeader />
+      <ScrollView style={styles.root} contentContainerStyle={{ paddingTop: spacing.xl, paddingBottom: 110 }}>
         {user.role === 'TAILLEUR' ? (
-          <Row icon="grid" label="Ma boutique" soon />
+          <ProfileHero
+            name={user.name}
+            verified={tailor?.profile?.verified}
+            location={tailor?.profile?.location}
+            stats={[
+              { label: 'Modèles', value: tailor?.designsCount ?? 0 },
+              { label: 'Abonnés', value: tailor?.followersCount ?? 0 },
+            ]}
+            bio={tailor?.profile?.bio}
+            specialties={tailor?.profile?.specialties ?? []}
+          />
         ) : (
-          <Row icon="sliders" label="Mes mesures" onPress={() => router.push('/my-measurements')} />
+          <ProfileHero name={user.name} roleLabel="Client" />
         )}
-        <Row icon="bell" label="Notifications" soon />
-        <Row icon="help-circle" label="Aide" soon />
-      </View>
 
-      <Pressable style={styles.logout} onPress={logout}>
-        <Feather name="log-out" size={18} color={colors.danger} />
-        <Text style={styles.logoutText}>Se déconnecter</Text>
-      </Pressable>
-    </ScrollView>
+        <View style={styles.list}>
+          {user.role === 'CLIENT' ? (
+            <Row icon="sliders" label="Mes mesures" onPress={() => router.push('/my-measurements')} />
+          ) : null}
+          <Row icon="bell" label="Notifications" soon />
+          <Row icon="help-circle" label="Aide" soon />
+        </View>
+
+        {user.role === 'TAILLEUR' ? (
+          <TailorProfileBody
+            designs={designs}
+            onPublish={() => router.push('/publish')}
+            onOpenClients={() => router.push('/clients')}
+            onOpenDesign={(id) => router.push(`/design/${id}`)}
+          />
+        ) : null}
+
+        <Pressable style={styles.logout} onPress={logout}>
+          <Feather name="log-out" size={18} color={colors.danger} />
+          <Text style={styles.logoutText}>Se déconnecter</Text>
+        </Pressable>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -90,31 +107,9 @@ function Row({
 }
 
 const styles = StyleSheet.create({
+  outer: { flex: 1, backgroundColor: colors.ink },
   root: { flex: 1, backgroundColor: colors.ink },
-  header: { alignItems: 'center', paddingHorizontal: spacing.xl, marginBottom: spacing.xl },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  avatarText: { color: colors.textOnDark, fontFamily: fonts.displayBold, fontSize: 40 },
-  name: { color: colors.textOnDark, fontFamily: fonts.display, fontSize: 26 },
-  roleChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: spacing.sm,
-    backgroundColor: colors.accentSoft,
-    paddingVertical: 6,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-  },
-  roleText: { color: colors.accent, fontFamily: fonts.bodyBold, fontSize: 13 },
-  list: { paddingHorizontal: spacing.lg, gap: 2 },
+  list: { paddingHorizontal: spacing.lg, gap: 2, marginTop: spacing.md },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

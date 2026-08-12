@@ -7,7 +7,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, spacing } from '../theme';
 import { ErrorRetry } from '../ui/ErrorRetry';
 import { MasonryColumns } from './masonry';
@@ -18,7 +17,6 @@ type FeedProps = {
 };
 
 export function Feed({ onOpenDesign }: FeedProps = {}) {
-  const insets = useSafeAreaInsets();
   const { designs, isLoading, isError, hasMore, refetch, loadMore } = useFeed();
 
   function onScroll(e: NativeSyntheticEvent<NativeScrollEvent>) {
@@ -47,12 +45,11 @@ export function Feed({ onOpenDesign }: FeedProps = {}) {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.md }]}
+      contentContainerStyle={[styles.content, { paddingTop: spacing.md }]}
       onScroll={onScroll}
       scrollEventThrottle={200}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.brand}>Moodly</Text>
       {designs.length === 0 ? (
         <Text style={styles.empty}>Aucun modèle pour l'instant.</Text>
       ) : (
@@ -64,17 +61,11 @@ export function Feed({ onOpenDesign }: FeedProps = {}) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.surface },
+  screen: { flex: 1, backgroundColor: colors.ink },
   content: { paddingHorizontal: spacing.md, paddingBottom: 110 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  brand: {
-    fontFamily: fonts.displayBold,
-    fontSize: 32,
-    color: colors.textPrimary,
-    marginBottom: spacing.lg,
-  },
   empty: {
-    color: colors.textSecondary,
+    color: colors.textOnDarkMuted,
     fontFamily: fonts.body,
     fontSize: 16,
     marginTop: spacing.xxl,

@@ -6,6 +6,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDesign } from '../../src/design/useDesign';
 import { useCreateOrder } from '../../src/orders/hooks';
+import { imageUri } from '../../src/lib/config';
 import { colors, fonts, radius, spacing } from '../../src/theme';
 import { Button } from '../../src/ui/Button';
 import { ErrorRetry } from '../../src/ui/ErrorRetry';
@@ -61,7 +62,7 @@ export default function CreateOrder() {
         </View>
 
         <View style={styles.model}>
-          <Image source={{ uri: design.imageUrl }} style={styles.thumb} contentFit="cover" />
+          <Image source={{ uri: imageUri(design.imageUrl) }} style={styles.thumb} contentFit="cover" />
           <View style={styles.modelBody}>
             <Text style={styles.modelTitle}>{design.title}</Text>
             <Text style={styles.modelTailor}>par {design.tailor.name}</Text>

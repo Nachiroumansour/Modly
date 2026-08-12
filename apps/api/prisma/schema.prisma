@@ -32,6 +32,8 @@ model User {
   linkedRecords ClientRecord[] @relation("clientLinkedRecords")
   clientOrders  Order[]        @relation("clientOrders")
   tailorOrders  Order[]        @relation("tailorOrders")
+  selfMeasurement SelfMeasurement?
+  collections   Collection[]
 
   @@map("users")
 }
@@ -72,6 +74,9 @@ model Design {
   imageUrl       String
   imageWidth     Int
   imageHeight    Int
+  coverBlurhash  String?
+  mediaCount     Int            @default(1)
+  media          Media[]
   likesCount     Int            @default(0)
   commentsCount  Int            @default(0)
   bookmarksCount Int            @default(0)
@@ -84,6 +89,29 @@ model Design {
   @@index([category])
   @@index([tailorId])
   @@map("designs")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model Media {
+  id           String    @id @default(cuid())
+  design       Design    @relation(fields: [designId], references: [id], onDelete: Cascade)
+  designId     String
+  type         MediaType @default(IMAGE)
+  url          String
+  thumbnailUrl String?
+  width        Int
+  height       Int
+  duration     Int?
+  blurhash     String?
+  position     Int
+  createdAt    DateTime  @default(now())
+
+  @@index([designId, position])
+  @@map("media")
 }
 
 model Like {
@@ -99,15 +127,30 @@ model Like {
 }
 
 model Bookmark {
-  id        String   @id @default(cuid())
-  userId    String
-  designId  String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  design    Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id           String      @id @default(cuid())
+  userId       String
+  designId     String
+  collectionId String?
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  design       Design      @relation(fields: [designId], references: [id], onDelete: Cascade)
+  collection   Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
 
   @@unique([userId, designId])
   @@map("bookmarks")
+}
+
+model Collection {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime   @default(now())
+  bookmarks Bookmark[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("collections")
 }
 
 model Comment {
@@ -185,6 +228,32 @@ model Measurement {
 
   @@index([clientRecordId])
   @@map("measurements")
+}
+
+model SelfMeasurement {
+  id              String            @id @default(cuid())
+  userId          String            @unique
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source          MeasurementSource @default(MANUELLE)
+  tourPoitrine    Float?
+  tourTaille      Float?
+  tourHanches     Float?
+  largeurEpaules  Float?
+  longueurBras    Float?
+  tourBras        Float?
+  tourCou         Float?
+  entrejambe      Float?
+  longueurJambe   Float?
+  longueurBoubou  Float?
+  longueurChemise Float?
+  tourCuisse      Float?
+  tourPoignet     Float?
+  carrureDos      Float?
+  longueurManche  Float?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@map("self_measurements")
 }
 
 enum OrderStatus {

@@ -61,7 +61,7 @@ ordersRouter.get('/', async (req, res) => {
     include: {
       client: { select: publicUserSelect },
       tailor: { select: publicUserSelect },
-      design: { select: { id: true, title: true, imageUrl: true } },
+      design: { select: { id: true, title: true, imageUrl: true, coverBlurhash: true } },
     },
   });
   res.json({ orders });
@@ -74,7 +74,7 @@ ordersRouter.get('/:id', async (req, res) => {
     include: {
       client: { select: publicUserSelect },
       tailor: { select: publicUserSelect },
-      design: { select: { id: true, title: true, imageUrl: true } },
+      design: { select: { id: true, title: true, imageUrl: true, coverBlurhash: true } },
       clientRecord: true,
       events: { orderBy: { createdAt: 'asc' } },
     },

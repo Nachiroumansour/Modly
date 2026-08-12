@@ -21,6 +21,15 @@ export function errorHandler(
     return;
   }
   if (err instanceof Error && err.name === 'MulterError') {
+    if ((err as { code?: string }).code === 'LIMIT_UNEXPECTED_FILE') {
+      res.status(400).json({
+        error: {
+          code: 'CHAMP_MEDIA',
+          message: 'Envoie 1 à 5 images sous le champ « media ».',
+        },
+      });
+      return;
+    }
     res.status(400).json({
       error: {
         code: 'FICHIER_INVALIDE',

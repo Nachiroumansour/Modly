@@ -11,7 +11,7 @@ async function publishDesign(token: string, overrides: Record<string, string> = 
     .set('Authorization', `Bearer ${token}`)
     .field('title', overrides.title ?? 'Boubou brodé or')
     .field('category', overrides.category ?? 'BOUBOU')
-    .attach('image', await makeTestImage(), 'modele.jpg');
+    .attach('media', await makeTestImage(), 'modele.jpg');
   if (overrides.description) req.field('description', overrides.description);
   return req;
 }
@@ -66,7 +66,7 @@ describe('POST /designs', () => {
       .set('Authorization', `Bearer ${token}`)
       .field('title', 'Faux fichier')
       .field('category', 'ROBE')
-      .attach('image', Buffer.from('pas une image'), {
+      .attach('media', Buffer.from('pas une image'), {
         filename: 'note.txt',
         contentType: 'text/plain',
       });

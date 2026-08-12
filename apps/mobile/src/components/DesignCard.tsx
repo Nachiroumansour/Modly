@@ -1,46 +1,63 @@
+import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { imageUri } from '../lib/config';
 import { colors, fonts, radius, spacing } from '../theme';
 import type { Design } from '../types';
 
 type Props = {
   design: Design;
   onPress: () => void;
+  onLongPress?: () => void;
 };
 
-export function DesignCard({ design, onPress }: Props) {
+// Carte façon Pinterest : image arrondie = la carte, placeholder flou, badge multi-média.
+export function DesignCard({ design, onPress, onLongPress }: Props) {
   const ratio = design.imageWidth / design.imageHeight;
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
-      <Image
-        testID="design-image"
-        source={{ uri: design.imageUrl }}
-        style={[styles.image, { aspectRatio: ratio }]}
-        contentFit="cover"
-        transition={180}
-      />
-      <View style={styles.meta}>
-        <Text style={styles.title} numberOfLines={1}>
-          {design.title}
-        </Text>
-        <Text style={styles.tailor} numberOfLines={1}>
-          {design.tailor.name}
-        </Text>
+    <Pressable onPress={onPress} onLongPress={onLongPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+      <View>
+        <Image
+          testID="design-image"
+          source={{ uri: imageUri(design.imageUrl) }}
+          placeholder={design.coverBlurhash ? { blurhash: design.coverBlurhash } : undefined}
+          style={[styles.image, { aspectRatio: ratio }]}
+          contentFit="cover"
+          transition={180}
+        />
+        {design.mediaCount > 1 ? (
+          <View testID="multi-indicator" style={styles.multi}>
+            <Feather name="copy" size={13} color={colors.textOnDark} />
+          </View>
+        ) : null}
       </View>
+      <Text style={styles.title} numberOfLines={1}>
+        {design.title}
+      </Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    backgroundColor: colors.surfaceWarm,
-    marginBottom: spacing.md,
+  card: { marginBottom: spacing.md },
+  pressed: { opacity: 0.92 },
+  image: { width: '100%', borderRadius: radius.md, backgroundColor: colors.inkElevated },
+  multi: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(23,18,15,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  pressed: { opacity: 0.9 },
-  image: { width: '100%', backgroundColor: colors.border },
-  meta: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  title: { color: colors.textPrimary, fontFamily: fonts.bodyBold, fontSize: 14 },
-  tailor: { color: colors.textSecondary, fontFamily: fonts.body, fontSize: 12, marginTop: 2 },
+  title: {
+    color: colors.textOnDark,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    marginTop: spacing.sm,
+    marginHorizontal: spacing.xs,
+  },
 });

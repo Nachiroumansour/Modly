@@ -19,21 +19,23 @@ export function splitColumns(designs: Design[]): [Design[], Design[]] {
 export function MasonryColumns({
   designs,
   onOpen,
+  onLongPress,
 }: {
   designs: Design[];
   onOpen: (id: string) => void;
+  onLongPress?: (id: string) => void;
 }) {
   const [left, right] = useMemo(() => splitColumns(designs), [designs]);
   return (
     <View style={styles.columns}>
       <View style={styles.column}>
         {left.map((d) => (
-          <DesignCard key={d.id} design={d} onPress={() => onOpen(d.id)} />
+          <DesignCard key={d.id} design={d} onPress={() => onOpen(d.id)} onLongPress={onLongPress ? () => onLongPress(d.id) : undefined} />
         ))}
       </View>
       <View style={styles.column}>
         {right.map((d) => (
-          <DesignCard key={d.id} design={d} onPress={() => onOpen(d.id)} />
+          <DesignCard key={d.id} design={d} onPress={() => onOpen(d.id)} onLongPress={onLongPress ? () => onLongPress(d.id) : undefined} />
         ))}
       </View>
     </View>
@@ -41,6 +43,6 @@ export function MasonryColumns({
 }
 
 const styles = StyleSheet.create({
-  columns: { flexDirection: 'row', gap: spacing.md },
+  columns: { flexDirection: 'row', gap: spacing.sm },
   column: { flex: 1 },
 });

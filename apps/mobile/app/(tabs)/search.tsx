@@ -13,16 +13,15 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CATEGORY_LABELS, DESIGN_CATEGORIES } from '../../src/designs/categories';
 import { MasonryColumns } from '../../src/feed/masonry';
 import { useSearch } from '../../src/feed/useSearch';
 import { colors, fonts, radius, spacing } from '../../src/theme';
+import { AppHeader } from '../../src/ui/AppHeader';
 import { ErrorRetry } from '../../src/ui/ErrorRetry';
 
 export default function SearchTab() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const [text, setText] = useState('');
   const [debounced, setDebounced] = useState('');
   const [category, setCategory] = useState<DesignCategory | null>(null);
@@ -45,66 +44,69 @@ export default function SearchTab() {
   }
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.searchBar}>
-        <Feather name="search" size={18} color={colors.textOnDarkMuted} />
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          placeholder="Rechercher un modèle…"
-          placeholderTextColor={colors.textOnDarkMuted}
-          style={styles.searchInput}
-          autoCorrect={false}
-          returnKeyType="search"
-        />
-        {text.length > 0 ? (
-          <Pressable onPress={() => setText('')} hitSlop={8}>
-            <Feather name="x" size={18} color={colors.textOnDarkMuted} />
-          </Pressable>
-        ) : null}
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chips}
-        style={styles.chipsRow}
-      >
-        <Chip label="Tout" active={category === null} onPress={() => setCategory(null)} />
-        {DESIGN_CATEGORIES.map((c) => (
-          <Chip key={c} label={CATEGORY_LABELS[c]} active={category === c} onPress={() => setCategory(c)} />
-        ))}
-      </ScrollView>
-
-      <View style={styles.sortRow}>
-        <SortItem label="Récent" active={sort === 'recent'} onPress={() => setSort('recent')} />
-        <SortItem label="Tendance" active={sort === 'tendance'} onPress={() => setSort('tendance')} />
-      </View>
-
-      {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.accent} />
+    <View style={styles.outer}>
+      <AppHeader />
+      <View style={[styles.root, { paddingTop: spacing.sm }]}>
+        <View style={styles.searchBar}>
+          <Feather name="search" size={18} color={colors.textOnDarkMuted} />
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            placeholder="Rechercher un modèle…"
+            placeholderTextColor={colors.textOnDarkMuted}
+            style={styles.searchInput}
+            autoCorrect={false}
+            returnKeyType="search"
+          />
+          {text.length > 0 ? (
+            <Pressable onPress={() => setText('')} hitSlop={8}>
+              <Feather name="x" size={18} color={colors.textOnDarkMuted} />
+            </Pressable>
+          ) : null}
         </View>
-      ) : isError ? (
-        <View style={styles.center}>
-          <ErrorRetry message="Recherche indisponible." onRetry={refetch} dark />
-        </View>
-      ) : (
+
         <ScrollView
-          contentContainerStyle={styles.results}
-          onScroll={onScroll}
-          scrollEventThrottle={200}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chips}
+          style={styles.chipsRow}
         >
-          {designs.length === 0 ? (
-            <Text style={styles.empty}>Aucun modèle ne correspond.</Text>
-          ) : (
-            <MasonryColumns designs={designs} onOpen={(id) => router.push(`/design/${id}`)} />
-          )}
-          {hasMore ? <ActivityIndicator style={styles.more} color={colors.accent} /> : null}
+          <Chip label="Tout" active={category === null} onPress={() => setCategory(null)} />
+          {DESIGN_CATEGORIES.map((c) => (
+            <Chip key={c} label={CATEGORY_LABELS[c]} active={category === c} onPress={() => setCategory(c)} />
+          ))}
         </ScrollView>
-      )}
+
+        <View style={styles.sortRow}>
+          <SortItem label="Récent" active={sort === 'recent'} onPress={() => setSort('recent')} />
+          <SortItem label="Tendance" active={sort === 'tendance'} onPress={() => setSort('tendance')} />
+        </View>
+
+        {isLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.accent} />
+          </View>
+        ) : isError ? (
+          <View style={styles.center}>
+            <ErrorRetry message="Recherche indisponible." onRetry={refetch} dark />
+          </View>
+        ) : (
+          <ScrollView
+            contentContainerStyle={styles.results}
+            onScroll={onScroll}
+            scrollEventThrottle={200}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {designs.length === 0 ? (
+              <Text style={styles.empty}>Aucun modèle ne correspond.</Text>
+            ) : (
+              <MasonryColumns designs={designs} onOpen={(id) => router.push(`/design/${id}`)} />
+            )}
+            {hasMore ? <ActivityIndicator style={styles.more} color={colors.accent} /> : null}
+          </ScrollView>
+        )}
+      </View>
     </View>
   );
 }
@@ -126,6 +128,7 @@ function SortItem({ label, active, onPress }: { label: string; active: boolean; 
 }
 
 const styles = StyleSheet.create({
+  outer: { flex: 1, backgroundColor: colors.ink },
   root: { flex: 1, backgroundColor: colors.ink },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   searchBar: {

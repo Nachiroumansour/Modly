@@ -7,6 +7,7 @@ import { clientRecordsRouter } from './modules/client-records/client-records.rou
 import { designsRouter } from './modules/designs/designs.routes.js';
 import { ordersRouter } from './modules/orders/orders.routes.js';
 import { tailorsRouter } from './modules/tailors/tailors.routes.js';
+import { collectionsRouter } from './modules/collections/collections.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 
 export function createApp() {
@@ -23,6 +24,7 @@ export function createApp() {
   });
 
   app.use('/auth', authRouter);
+  app.use('/me/collections', collectionsRouter);
   app.use(usersRouter);
   app.use('/designs', designsRouter);
   app.use('/tailors', tailorsRouter);

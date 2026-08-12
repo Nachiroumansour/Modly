@@ -26,3 +26,13 @@ function deriveFromMetro(): string | null {
 
 export const API_URL =
   process.env.EXPO_PUBLIC_API_URL ?? deriveFromMetro() ?? `http://localhost:${API_PORT}`;
+
+/**
+ * Résout l'URI d'une image renvoyée par l'API.
+ * - Chemin relatif (`/uploads/x.webp`) → préfixé par `API_URL` (suit l'hôte courant,
+ *   donc ne casse jamais quand l'IP LAN change).
+ * - URL absolue (`http…`) → renvoyée telle quelle (rétro-compat / Cloudinary).
+ */
+export function imageUri(path: string): string {
+  return /^https?:\/\//.test(path) ? path : `${API_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+}

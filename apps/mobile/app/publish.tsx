@@ -15,32 +15,40 @@ export default function Publish() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { publish, publishing } = usePublishDesign();
-  const [uri, setUri] = useState<string | null>(null);
+  const [uris, setUris] = useState<string[]>([]);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<DesignCategory | null>(null);
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  async function pickImage() {
+  async function pickImages() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      setError('Autorise l’accès aux photos pour choisir une image.');
+      setError('Autorise l’accès aux photos pour choisir des images.');
       return;
     }
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
-    if (!res.canceled && res.assets[0]) setUri(res.assets[0].uri);
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      selectionLimit: 5,
+      quality: 0.9,
+    });
+    if (!res.canceled) {
+      setUris(res.assets.slice(0, 5).map((a) => a.uri));
+      if (res.assets.length > 5) setError('Seules les 5 premières photos sont gardées.');
+    }
   }
 
   async function submit() {
     setError(null);
-    if (!uri) return setError('Ajoute une photo du modèle.');
+    if (uris.length === 0) return setError('Ajoute au moins une photo du modèle.');
     if (title.trim().length === 0) return setError('Donne un titre à ton modèle.');
     if (!category) return setError('Choisis une catégorie.');
     try {
-      await publish({ uri, title: title.trim(), category, description: description.trim() || undefined });
-      router.replace('/(tabs)/portfolio');
+      await publish({ uris, title: title.trim(), category, description: description.trim() || undefined });
+      router.replace('/(tabs)/profile');
     } catch {
-      setError("La publication a échoué. Réessaie.");
+      setError('La publication a échoué. Réessaie.');
     }
   }
 
@@ -55,16 +63,32 @@ export default function Publish() {
           <View style={{ width: 26 }} />
         </View>
 
-        <Pressable style={styles.picker} onPress={pickImage}>
-          {uri ? (
-            <Image source={{ uri }} style={styles.preview} contentFit="cover" />
+        <Pressable style={styles.picker} onPress={pickImages}>
+          {uris.length > 0 ? (
+            <Image source={{ uri: uris[0] }} style={styles.preview} contentFit="cover" />
           ) : (
             <View style={styles.pickerEmpty}>
               <Feather name="camera" size={28} color={colors.accent} />
-              <Text style={styles.pickerText}>Ajouter une photo</Text>
+              <Text style={styles.pickerText}>Ajouter des photos (jusqu’à 5)</Text>
             </View>
           )}
         </Pressable>
+        {uris.length > 1 ? (
+          <View style={styles.thumbs}>
+            {uris.map((u, i) => (
+              <Pressable
+                key={u + i}
+                testID="remove-thumb"
+                onPress={() => setUris((prev) => prev.filter((_, idx) => idx !== i))}
+              >
+                <Image source={{ uri: u }} style={styles.thumb} contentFit="cover" />
+                <View style={styles.thumbRemove}>
+                  <Feather name="x" size={12} color={colors.textOnDark} />
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
 
         <View style={styles.section}>
           <Text style={styles.label}>Titre</Text>
@@ -136,6 +160,19 @@ const styles = StyleSheet.create({
     borderColor: colors.inkLine,
   },
   preview: { width: '100%', height: '100%' },
+  thumbs: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg, marginTop: spacing.sm, flexWrap: 'wrap' },
+  thumb: { width: 54, height: 54, borderRadius: radius.sm, backgroundColor: colors.inkElevated },
+  thumbRemove: {
+    position: 'absolute',
+    top: spacing.xs / 2,
+    right: spacing.xs / 2,
+    width: 18,
+    height: 18,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(23,18,15,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pickerEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   pickerText: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyBold, fontSize: 14 },
   section: { paddingHorizontal: spacing.lg, marginTop: spacing.xl },

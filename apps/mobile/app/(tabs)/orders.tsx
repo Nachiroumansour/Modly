@@ -2,63 +2,72 @@ import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/auth/AuthContext';
+import { imageUri } from '../../src/lib/config';
 import { formatPrice } from '../../src/orders/labels';
 import { StatusChip } from '../../src/orders/StatusChip';
 import { useOrders } from '../../src/orders/hooks';
 import { colors, fonts, radius, spacing } from '../../src/theme';
 import type { Order } from '../../src/types';
+import { AppHeader } from '../../src/ui/AppHeader';
 import { ErrorRetry } from '../../src/ui/ErrorRetry';
 
 export default function OrdersTab() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { orders, isLoading, isError, refetch } = useOrders();
   const isTailor = user?.role === 'TAILLEUR';
 
   if (isLoading) {
     return (
-      <View style={[styles.root, styles.center]}>
-        <ActivityIndicator color={colors.accent} />
+      <View style={styles.outer}>
+        <AppHeader />
+        <View style={[styles.root, styles.center]}>
+          <ActivityIndicator color={colors.accent} />
+        </View>
       </View>
     );
   }
   if (isError) {
     return (
-      <View style={[styles.root, styles.center]}>
-        <ErrorRetry message="Impossible de charger les commandes." onRetry={refetch} dark />
+      <View style={styles.outer}>
+        <AppHeader />
+        <View style={[styles.root, styles.center]}>
+          <ErrorRetry message="Impossible de charger les commandes." onRetry={refetch} dark />
+        </View>
       </View>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={{ paddingTop: insets.top + spacing.lg, paddingHorizontal: spacing.lg, paddingBottom: 110 }}
-      showsVerticalScrollIndicator={false}
-    >
-      <Text style={styles.title}>{isTailor ? 'Commandes reçues' : 'Mes commandes'}</Text>
-      {orders.length === 0 ? (
-        <View style={styles.empty}>
-          <View style={styles.badge}>
-            <Feather name="shopping-bag" size={26} color={colors.accent} />
+    <View style={styles.outer}>
+      <AppHeader />
+      <ScrollView
+        style={styles.root}
+        contentContainerStyle={{ paddingTop: spacing.lg, paddingHorizontal: spacing.lg, paddingBottom: 110 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title}>{isTailor ? 'Commandes reçues' : 'Mes commandes'}</Text>
+        {orders.length === 0 ? (
+          <View style={styles.empty}>
+            <View style={styles.badge}>
+              <Feather name="shopping-bag" size={26} color={colors.accent} />
+            </View>
+            <Text style={styles.emptyText}>
+              {isTailor
+                ? 'Les commandes de tes clients apparaîtront ici.'
+                : 'Commande un modèle depuis le feed pour suivre sa confection ici.'}
+            </Text>
           </View>
-          <Text style={styles.emptyText}>
-            {isTailor
-              ? 'Les commandes de tes clients apparaîtront ici.'
-              : 'Commande un modèle depuis le feed pour suivre sa confection ici.'}
-          </Text>
-        </View>
-      ) : (
-        <View style={styles.list}>
-          {orders.map((o) => (
-            <OrderRow key={o.id} order={o} showTailor={!isTailor} onPress={() => router.push(`/orders/${o.id}`)} />
-          ))}
-        </View>
-      )}
-    </ScrollView>
+        ) : (
+          <View style={styles.list}>
+            {orders.map((o) => (
+              <OrderRow key={o.id} order={o} showTailor={!isTailor} onPress={() => router.push(`/orders/${o.id}`)} />
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -67,7 +76,7 @@ function OrderRow({ order, showTailor, onPress }: { order: Order; showTailor: bo
   return (
     <Pressable style={styles.row} onPress={onPress}>
       {order.design ? (
-        <Image source={{ uri: order.design.imageUrl }} style={styles.thumb} contentFit="cover" />
+        <Image source={{ uri: imageUri(order.design.imageUrl) }} style={styles.thumb} contentFit="cover" />
       ) : (
         <View style={[styles.thumb, styles.thumbEmpty]}>
           <Feather name="scissors" size={20} color={colors.textOnDarkMuted} />
@@ -92,6 +101,7 @@ function OrderRow({ order, showTailor, onPress }: { order: Order; showTailor: bo
 }
 
 const styles = StyleSheet.create({
+  outer: { flex: 1, backgroundColor: colors.ink },
   root: { flex: 1, backgroundColor: colors.ink },
   center: { alignItems: 'center', justifyContent: 'center' },
   title: { color: colors.textOnDark, fontFamily: fonts.displayBold, fontSize: 30, marginBottom: spacing.lg },

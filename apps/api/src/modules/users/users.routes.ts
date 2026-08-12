@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
-import { designInclude, toApiDesign } from '../designs/designs.service.js';
+import { measurementSchema } from '../client-records/client-records.service.js';
+import { designInclude, ensureDesignExists, toApiDesign } from '../designs/designs.service.js';
 
 export const usersRouter = Router();
 
@@ -53,6 +54,35 @@ usersRouter.get('/me/bookmarks', requireAuth, async (req, res) => {
   res.json({ designs: bookmarks.map((b) => toApiDesign(b.design)) });
 });
 
+usersRouter.patch('/me/bookmarks/:designId', requireAuth, async (req, res) => {
+  const parsed = z.object({ collectionId: z.string().nullable() }).safeParse(req.body);
+  if (!parsed.success) throw new ApiError(400, 'DONNEES_INVALIDES', 'Collection invalide.');
+  const userId = req.user!.sub;
+  const designId = req.params.designId as string;
+  await ensureDesignExists(designId);
+  if (parsed.data.collectionId) {
+    const col = await prisma.collection.findFirst({
+      where: { id: parsed.data.collectionId, userId },
+    });
+    if (!col) throw new ApiError(404, 'INTROUVABLE', 'Collection introuvable.');
+  }
+  const existing = await prisma.bookmark.findUnique({
+    where: { userId_designId: { userId, designId } },
+  });
+  if (existing) {
+    await prisma.bookmark.update({
+      where: { id: existing.id },
+      data: { collectionId: parsed.data.collectionId },
+    });
+  } else {
+    await prisma.$transaction([
+      prisma.bookmark.create({ data: { userId, designId, collectionId: parsed.data.collectionId } }),
+      prisma.design.update({ where: { id: designId }, data: { bookmarksCount: { increment: 1 } } }),
+    ]);
+  }
+  res.status(204).send();
+});
+
 usersRouter.patch('/me/profile', requireAuth, requireRole('TAILLEUR'), async (req, res) => {
   const parsed = profileSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -81,4 +111,22 @@ usersRouter.get('/me/measurements', requireAuth, requireRole('CLIENT'), async (r
       latestMeasurement: r.measurements[0] ?? null,
     })),
   });
+});
+
+usersRouter.get('/me/self-measurement', requireAuth, requireRole('CLIENT'), async (req, res) => {
+  const measurement = await prisma.selfMeasurement.findUnique({ where: { userId: req.user!.sub } });
+  res.json({ measurement });
+});
+
+usersRouter.put('/me/self-measurement', requireAuth, requireRole('CLIENT'), async (req, res) => {
+  const parsed = measurementSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new ApiError(400, 'DONNEES_INVALIDES', parsed.error.issues[0].message);
+  }
+  const measurement = await prisma.selfMeasurement.upsert({
+    where: { userId: req.user!.sub },
+    create: { userId: req.user!.sub, ...parsed.data },
+    update: parsed.data,
+  });
+  res.json({ measurement });
 });

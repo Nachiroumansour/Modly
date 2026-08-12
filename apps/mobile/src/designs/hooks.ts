@@ -1,8 +1,8 @@
-import type { DesignCategory } from '@moodly/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../auth/AuthContext';
 import { apiFetch, apiUpload } from '../lib/api';
 import type { ApiUser, Design } from '../types';
+import { buildDesignForm, type PublishInput } from './buildDesignForm';
 
 type TailorProfilePayload = {
   tailor: ApiUser & { designsCount: number; followersCount: number };
@@ -26,30 +26,11 @@ export function usePortfolio(tailorId?: string) {
   };
 }
 
-type PublishInput = {
-  uri: string;
-  title: string;
-  category: DesignCategory;
-  description?: string;
-};
-
 export function usePublishDesign() {
   const { token } = useAuth();
   const qc = useQueryClient();
   const m = useMutation({
-    mutationFn: (input: PublishInput) => {
-      const form = new FormData();
-      form.append('title', input.title);
-      form.append('category', input.category);
-      if (input.description) form.append('description', input.description);
-
-      const name = input.uri.split('/').pop() ?? 'model.jpg';
-      const ext = (name.split('.').pop() ?? 'jpg').toLowerCase();
-      const type = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-      form.append('image', { uri: input.uri, name, type } as unknown as Blob);
-
-      return apiUpload<{ design: Design }>('/designs', form, token);
-    },
+    mutationFn: (input: PublishInput) => apiUpload<{ design: Design }>('/designs', buildDesignForm(input), token),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['feed'] });
       qc.invalidateQueries({ queryKey: ['portfolio'] });

@@ -5,20 +5,9 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAddMeasurement, useClientRecord } from '../../src/clients/hooks';
+import { measureStringsFrom, parseMeasureValues, type MeasureStrings } from '../../src/measurements/parse';
 import { colors, fonts, radius, spacing } from '../../src/theme';
 import { Button } from '../../src/ui/Button';
-
-type Values = Partial<Record<MeasurementKey, string>>;
-
-function initialValues(latest: Partial<Record<MeasurementKey, number | null>> | null): Values {
-  const v: Values = {};
-  if (!latest) return v;
-  for (const f of MEASUREMENT_FIELDS) {
-    const n = latest[f.key];
-    if (n != null) v[f.key] = String(n);
-  }
-  return v;
-}
 
 export default function MeasureForm() {
   const router = useRouter();
@@ -26,7 +15,7 @@ export default function MeasureForm() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { latestMeasurement } = useClientRecord(id);
   const { addMeasurement, saving } = useAddMeasurement(id);
-  const [values, setValues] = useState<Values>(() => initialValues(latestMeasurement));
+  const [values, setValues] = useState<MeasureStrings>(() => measureStringsFrom(latestMeasurement));
   const [error, setError] = useState<string | null>(null);
 
   function set(key: MeasurementKey, text: string) {
@@ -35,21 +24,10 @@ export default function MeasureForm() {
 
   async function submit() {
     setError(null);
-    const payload: Partial<Record<MeasurementKey, number>> = {};
-    for (const f of MEASUREMENT_FIELDS) {
-      const raw = values[f.key];
-      if (raw == null || raw.trim() === '') continue;
-      const n = Number(raw);
-      if (!Number.isFinite(n) || n <= 0 || n > 300) {
-        return setError(`« ${f.label} » : valeur invalide (entre 0 et 300 cm).`);
-      }
-      payload[f.key] = n;
-    }
-    if (Object.keys(payload).length === 0) {
-      return setError('Renseigne au moins une mesure.');
-    }
+    const res = parseMeasureValues(values);
+    if (!res.ok) return setError(res.error);
     try {
-      await addMeasurement(payload);
+      await addMeasurement(res.payload);
       router.back();
     } catch {
       setError("L'enregistrement a échoué. Réessaie.");
