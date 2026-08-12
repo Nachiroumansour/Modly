@@ -29,12 +29,11 @@ describe('GET /designs (feed)', () => {
     await seedDesigns(tailorId);
   });
 
-  it('pagine le feed sans authentification (20 par défaut, hasMore)', async () => {
+  it('pagine le feed par curseur sans authentification (20 par défaut, nextCursor)', async () => {
     const res = await request(app).get('/designs');
     expect(res.status).toBe(200);
     expect(res.body.designs).toHaveLength(20);
-    expect(res.body.page).toBe(1);
-    expect(res.body.hasMore).toBe(true);
+    expect(res.body.nextCursor).toEqual(expect.any(String));
     expect(res.body.designs[0].likedByMe).toBe(false);
     expect(res.body.designs[0].tailor.id).toBe(tailorId);
   });
@@ -61,7 +60,7 @@ describe('GET /designs (feed)', () => {
   });
 
   it('trie par tendance (le plus liké en premier)', async () => {
-    const res = await request(app).get('/designs?sort=tendance');
+    const res = await request(app).get('/designs?sort=tendance&page=1');
     expect(res.status).toBe(200);
     expect(res.body.designs[0].likesCount).toBe(99);
   });
