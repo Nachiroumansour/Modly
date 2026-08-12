@@ -55,6 +55,9 @@ export async function assertTailor(tailorId: string): Promise<void> {
   }
 }
 
+/** Statuts où le client peut encore annuler lui-même (avant la coupe du tissu). */
+export const CLIENT_CANCELLABLE: readonly OrderStatus[] = ['EN_ATTENTE', 'TISSU_RECU'];
+
 /** La commande, si l'utilisateur (client OU tailleur) en est partie prenante. Sinon 404. */
 export async function getOwnedOrder(userId: string, orderId: string) {
   const order = await prisma.order.findFirst({
