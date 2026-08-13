@@ -8,7 +8,7 @@ export default function DesignDetail() {
     <DesignScreen
       id={id}
       onBack={() => router.back()}
-      onRequireAuth={() => router.push('/(auth)/register')}
+      onRequireAuth={() => router.push('/(auth)/welcome')}
       onOrder={() => router.push(`/order/create?designId=${id}`)}
       onTailor={(tailorId) => router.push(`/tailor/${tailorId}`)}
       onOpenDesign={(sid) => router.push(`/design/${sid}`)}

@@ -15,7 +15,7 @@ export default function FeedTab() {
 
   function changeScope(s: FeedScope) {
     if (s === 'following' && !user) {
-      router.push('/(auth)/register');
+      router.push('/(auth)/welcome');
       return;
     }
     setScope(s);

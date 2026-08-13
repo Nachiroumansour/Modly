@@ -1,4 +1,4 @@
-import type { Role } from '@moodly/shared';
+import type { Role, DesignCategory } from '@moodly/shared';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { apiFetch } from '../lib/api';
 import { registerPushToken, unregisterPushToken } from '../notifications/push';
@@ -10,6 +10,7 @@ type RegisterInput = {
   password: string;
   name: string;
   role: Role;
+  interests?: DesignCategory[];
 };
 
 type AuthValue = {
