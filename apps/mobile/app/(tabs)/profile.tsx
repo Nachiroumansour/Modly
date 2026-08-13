@@ -25,7 +25,7 @@ export default function ProfileTab() {
             <Text style={styles.guestText}>
               Crée ton compte pour commander, sauvegarder tes modèles préférés et suivre tes tailleurs.
             </Text>
-            <Pressable style={styles.primary} onPress={() => router.push('/(auth)/register')}>
+            <Pressable style={styles.primary} onPress={() => router.push('/(auth)/welcome')}>
               <Text style={styles.primaryText}>Créer un compte</Text>
             </Pressable>
             <Pressable style={styles.ghost} onPress={() => router.push('/(auth)/login')}>

@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { Prisma } from '@prisma/client';
-import type { Role } from '@moodly/shared';
+import type { Role, DesignCategory } from '@moodly/shared';
 import { ApiError } from '../../lib/errors.js';
 import { signAccessToken, signRefreshToken } from '../../lib/jwt.js';
 import { prisma } from '../../lib/prisma.js';
@@ -36,6 +36,7 @@ export async function register(input: {
   password: string;
   name: string;
   role: Role;
+  interests?: DesignCategory[];
 }) {
   const passwordHash = await bcrypt.hash(input.password, 10);
   try {
@@ -45,6 +46,7 @@ export async function register(input: {
         passwordHash,
         name: input.name,
         role: input.role,
+        interests: input.interests ?? [],
         ...(input.role === 'TAILLEUR' ? { tailorProfile: { create: {} } } : {}),
       },
     });
