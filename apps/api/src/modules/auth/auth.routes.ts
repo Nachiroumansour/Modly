@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { ROLES } from '@moodly/shared';
+import { ROLES, DESIGN_CATEGORIES } from '@moodly/shared';
 import { ApiError } from '../../lib/errors.js';
 import { signAccessToken, verifyRefreshToken } from '../../lib/jwt.js';
 import * as authService from './auth.service.js';
@@ -16,6 +16,7 @@ const registerSchema = z.object({
   password: z.string().min(6, 'Le mot de passe doit faire au moins 6 caractères.'),
   name: z.string().min(1, 'Le nom est requis.').max(80),
   role: z.enum(ROLES),
+  interests: z.array(z.enum(DESIGN_CATEGORIES)).max(8).optional(),
 });
 
 authRouter.post('/register', async (req, res) => {

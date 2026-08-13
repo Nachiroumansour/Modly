@@ -41,6 +41,23 @@ describe('POST /auth/register', () => {
     expect(profile?.verified).toBe(false);
   });
 
+  it("persiste les centres d'intérêt fournis à l'inscription", async () => {
+    const res = await request(app)
+      .post('/auth/register')
+      .send({ ...fatou, phone: '+221770000010', interests: ['MARIAGE', 'ROBE', 'BOUBOU'] });
+    expect(res.status).toBe(201);
+    const user = await prisma.user.findUnique({ where: { id: res.body.user.id } });
+    expect(user?.interests).toEqual(['MARIAGE', 'ROBE', 'BOUBOU']);
+  });
+
+  it("refuse une catégorie d'intérêt invalide (400)", async () => {
+    const res = await request(app)
+      .post('/auth/register')
+      .send({ ...fatou, phone: '+221770000011', interests: ['PAS_UNE_CATEGORIE'] });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('DONNEES_INVALIDES');
+  });
+
   it('refuse un téléphone déjà inscrit (409)', async () => {
     await request(app).post('/auth/register').send(fatou);
     const res = await request(app).post('/auth/register').send(fatou);
