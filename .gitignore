@@ -5,3 +5,6 @@ dist/
 .superpowers/
 uploads/
 test-uploads/
+
+# macOS
+.DS_Store
