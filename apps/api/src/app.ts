@@ -9,6 +9,7 @@ import { ordersRouter } from './modules/orders/orders.routes.js';
 import { tailorsRouter } from './modules/tailors/tailors.routes.js';
 import { collectionsRouter } from './modules/collections/collections.routes.js';
 import { commentsRouter } from './modules/comments/comments.routes.js';
+import { notificationsRouter, pushTokensRouter } from './modules/notifications/notifications.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 
 export function createApp() {
@@ -26,6 +27,8 @@ export function createApp() {
 
   app.use('/auth', authRouter);
   app.use('/me/collections', collectionsRouter);
+  app.use('/me/notifications', notificationsRouter);
+  app.use('/me/push-tokens', pushTokensRouter);
   app.use(usersRouter);
   app.use('/designs', designsRouter);
   app.use('/comments', commentsRouter);

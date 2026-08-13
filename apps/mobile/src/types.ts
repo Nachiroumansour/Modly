@@ -146,3 +146,18 @@ export type SelfMeasurement = {
   source: MeasurementSource;
   updatedAt: string;
 } & Partial<Record<MeasurementKey, number | null>>;
+
+export type NotificationType = 'LIKE' | 'COMMENT' | 'REPLY' | 'FOLLOW' | 'ORDER';
+
+export type ApiNotification = {
+  id: string;
+  type: NotificationType;
+  actorCount: number;
+  read: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastActor: { id: string; name: string; avatarUrl: string | null } | null;
+  design: { id: string; title: string; imageUrl: string; coverBlurhash: string | null } | null;
+  commentId: string | null;
+  orderId: string | null;
+};

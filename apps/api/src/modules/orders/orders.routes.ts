@@ -5,9 +5,11 @@ import { z } from 'zod';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 import { requireAuth, requireRole } from '../../middleware/auth.js';
+import { createNotification } from '../notifications/notifications.service.js';
 import {
   assertTailor,
   assertTransition,
+  CLIENT_CANCELLABLE,
   getOwnedOrder,
   publicUserSelect,
   snapshotFromRecord,
@@ -46,6 +48,14 @@ ordersRouter.post('/', requireRole('CLIENT'), async (req, res) => {
       note: parsed.data.note,
       events: { create: { status: 'EN_ATTENTE' } },
     },
+  });
+  await createNotification({
+    recipientId: parsed.data.tailorId,
+    actorId: req.user!.sub,
+    type: 'ORDER',
+    groupKey: `order:${order.id}:EN_ATTENTE`,
+    orderId: order.id,
+    designId: parsed.data.designId ?? null,
   });
   res.status(201).json({ order });
 });
@@ -136,5 +146,38 @@ ordersRouter.patch('/:id/status', requireRole('TAILLEUR'), async (req, res) => {
     where: { id: updated.id },
     include: { events: { orderBy: { createdAt: 'asc' } } },
   });
+  await createNotification({
+    recipientId: order.clientId,
+    actorId: req.user!.sub,
+    type: 'ORDER',
+    groupKey: `order:${order.id}:${parsed.data.status}`,
+    orderId: order.id,
+  });
   res.json({ order: withEvents });
+});
+
+ordersRouter.patch('/:id/cancel', requireRole('CLIENT'), async (req, res) => {
+  const order = await getOwnedOrder(req.user!.sub, req.params.id as string);
+  if (order.clientId !== req.user!.sub) {
+    throw new ApiError(404, 'INTROUVABLE', 'Commande introuvable.');
+  }
+  if (order.status === 'ANNULEE') {
+    res.json({ order }); // idempotent
+    return;
+  }
+  if (!CLIENT_CANCELLABLE.includes(order.status)) {
+    throw new ApiError(409, 'ANNULATION_IMPOSSIBLE', 'Cette commande est trop avancée pour être annulée.');
+  }
+  const [updated] = await prisma.$transaction([
+    prisma.order.update({ where: { id: order.id }, data: { status: 'ANNULEE' } }),
+    prisma.orderEvent.create({ data: { orderId: order.id, status: 'ANNULEE', note: 'Annulée par le client' } }),
+  ]);
+  await createNotification({
+    recipientId: order.tailorId,
+    actorId: req.user!.sub,
+    type: 'ORDER',
+    groupKey: `order:${order.id}:ANNULEE`,
+    orderId: order.id,
+  });
+  res.json({ order: updated });
 });

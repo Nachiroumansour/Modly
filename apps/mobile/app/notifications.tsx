@@ -1,12 +1,30 @@
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useMarkAllRead, useNotifications } from '../src/notifications/hooks';
+import { NotificationsList } from '../src/notifications/NotificationsList';
 import { colors, fonts, radius, spacing } from '../src/theme';
+import type { ApiNotification } from '../src/types';
 
 export default function Notifications() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { notifications } = useNotifications();
+  const { markAllRead } = useMarkAllRead();
+
+  useEffect(() => {
+    markAllRead().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function go(n: ApiNotification) {
+    if (n.type === 'ORDER' && n.orderId) router.push(`/orders/${n.orderId}`);
+    else if (n.design) router.push(`/design/${n.design.id}`);
+    else if (n.type === 'FOLLOW' && n.lastActor) router.push(`/tailor/${n.lastActor.id}`);
+  }
+
   return (
     <View style={styles.root}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
@@ -16,12 +34,16 @@ export default function Notifications() {
         <Text style={styles.title}>Notifications</Text>
         <View style={{ width: 26 }} />
       </View>
-      <View style={styles.empty}>
-        <View style={styles.badge}>
-          <Feather name="bell" size={26} color={colors.accent} />
+      {notifications.length === 0 ? (
+        <View style={styles.empty}>
+          <View style={styles.badge}>
+            <Feather name="bell" size={26} color={colors.accent} />
+          </View>
+          <Text style={styles.emptyText}>Bientôt tes notifications ici.</Text>
         </View>
-        <Text style={styles.emptyText}>Bientôt tes notifications ici.</Text>
-      </View>
+      ) : (
+        <NotificationsList notifications={notifications} onPress={go} />
+      )}
     </View>
   );
 }

@@ -35,6 +35,9 @@ model User {
   selfMeasurement SelfMeasurement?
   collections   Collection[]
   commentLikes  CommentLike[]
+  recipientNotifications Notification[] @relation("recipientNotifications")
+  actorNotifications     Notification[] @relation("actorNotifications")
+  pushTokens             PushToken[]
 
   @@map("users")
 }
@@ -86,6 +89,7 @@ model Design {
   bookmarks      Bookmark[]
   comments       Comment[]
   orders         Order[]
+  notifications  Notification[]
 
   @@index([category])
   @@index([tailorId])
@@ -312,6 +316,7 @@ model Order {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
   events               OrderEvent[]
+  notifications        Notification[]
 
   @@index([clientId])
   @@index([tailorId])
@@ -328,4 +333,47 @@ model OrderEvent {
 
   @@index([orderId])
   @@map("order_events")
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  REPLY
+  FOLLOW
+  ORDER
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  recipientId String
+  recipient   User             @relation("recipientNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  groupKey    String
+  actorCount  Int              @default(1)
+  lastActorId String?
+  lastActor   User?            @relation("actorNotifications", fields: [lastActorId], references: [id], onDelete: SetNull)
+  designId    String?
+  design      Design?          @relation(fields: [designId], references: [id], onDelete: Cascade)
+  commentId   String?
+  orderId     String?
+  order       Order?           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([recipientId, type, groupKey])
+  @@index([recipientId, read])
+  @@index([recipientId, updatedAt])
+  @@map("notifications")
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("push_tokens")
 }

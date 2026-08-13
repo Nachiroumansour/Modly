@@ -1,6 +1,7 @@
 import type { Role } from '@moodly/shared';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { apiFetch } from '../lib/api';
+import { registerPushToken, unregisterPushToken } from '../notifications/push';
 import type { AuthResponse, AuthUser } from '../types';
 import { clearToken, loadToken, saveToken } from './storage';
 
@@ -48,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await saveToken(res.accessToken);
     setToken(res.accessToken);
     setUser(res.user);
+    registerPushToken(res.accessToken).catch(() => {});
   }
 
   async function register(input: RegisterInput) {
@@ -64,6 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
+    if (token) {
+      unregisterPushToken(token).catch(() => {});
+    }
     await clearToken();
     setToken(null);
     setUser(null);
