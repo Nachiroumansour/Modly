@@ -9,6 +9,7 @@
     "test": "vitest run",
     "backfill:media": "tsx scripts/backfill-media.mjs",
     "seed:demo": "node scripts/seed-demo.mjs",
+    "ingest:photos": "node scripts/ingest-photos.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
