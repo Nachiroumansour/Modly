@@ -48,6 +48,7 @@ model TailorProfile {
   userId          String   @unique
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   bio             String?
+  coverUrl        String?
   location        String?
   specialties     String[] @default([])
   yearsExperience Int?
