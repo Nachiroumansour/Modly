@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import type { DesignCategory } from '@moodly/shared';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
+import { getBlockedUserIds } from '../blocks/blocks.service.js';
 import { createNotification } from '../notifications/notifications.service.js';
 
 export const publicUserSelect = { id: true, name: true, avatarUrl: true } as const;
@@ -50,8 +51,9 @@ export async function getForYouFeed(params: {
   interests: DesignCategory[];
   limit: number;
   cursor?: string;
+  blockedIds?: string[];
 }) {
-  const { viewerId, interests, limit, cursor } = params;
+  const { viewerId, interests, limit, cursor, blockedIds = [] } = params;
   const orderBy = [{ createdAt: 'desc' as const }, { id: 'desc' as const }];
   const include = designInclude(viewerId);
 
@@ -62,7 +64,7 @@ export async function getForYouFeed(params: {
     const category =
       ph === 'p' ? { in: interests } : { notIn: interests };
     return prisma.design.findMany({
-      where: { category },
+      where: { category, ...(blockedIds.length ? { tailorId: { notIn: blockedIds } } : {}) },
       orderBy,
       take: take + 1,
       ...(id ? { cursor: { id }, skip: 1 } : {}),
@@ -284,14 +286,17 @@ export async function addComment(userId: string, designId: string, text: string,
 }
 
 export async function getThreadedComments(designId: string, viewerId: string) {
+  const blockedIds = await getBlockedUserIds(viewerId);
+  const notBlocked = blockedIds.length ? { userId: { notIn: blockedIds } } : {};
   const roots = await prisma.comment.findMany({
-    where: { designId, parentId: null },
+    where: { designId, parentId: null, ...notBlocked },
     orderBy: [{ pinned: 'desc' }, { createdAt: 'asc' }],
     take: 200,
     include: {
       user: { select: publicUserSelect },
       likes: { where: { userId: viewerId }, select: { id: true } },
       replies: {
+        where: notBlocked,
         orderBy: { createdAt: 'asc' },
         include: {
           user: { select: publicUserSelect },
