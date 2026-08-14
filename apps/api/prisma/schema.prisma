@@ -39,6 +39,10 @@ model User {
   recipientNotifications Notification[] @relation("recipientNotifications")
   actorNotifications     Notification[] @relation("actorNotifications")
   pushTokens             PushToken[]
+  reportsMade     Report[] @relation("reportsMade")
+  reportsResolved Report[] @relation("reportsResolved")
+  blocksMade      Block[]  @relation("blocksMade")
+  blockedBy       Block[]  @relation("blockedBy")
 
   @@map("users")
 }
@@ -378,4 +382,60 @@ model PushToken {
 
   @@index([userId])
   @@map("push_tokens")
+}
+
+enum ReportTargetType {
+  DESIGN
+  COMMENT
+  USER
+}
+
+enum ReportReason {
+  INAPPROPRIE
+  SPAM
+  PLAGIAT
+  HARCELEMENT
+  AUTRE
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWING
+  RESOLVED
+  REJECTED
+}
+
+model Report {
+  id             String           @id @default(cuid())
+  reporterId     String
+  reporter       User             @relation("reportsMade", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetType     ReportTargetType
+  targetId       String
+  reason         ReportReason
+  details        String?
+  status         ReportStatus     @default(OPEN)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  resolvedById   String?
+  resolvedBy     User?            @relation("reportsResolved", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedAt     DateTime?
+  resolutionNote String?
+
+  @@unique([reporterId, targetType, targetId])
+  @@index([status])
+  @@index([targetType, targetId])
+  @@map("reports")
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blocker   User     @relation("blocksMade", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId String
+  blocked   User     @relation("blockedBy", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+  @@map("blocks")
 }
