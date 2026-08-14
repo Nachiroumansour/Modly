@@ -42,17 +42,29 @@ export default function ProfileTab() {
       <AppHeader />
       <ScrollView style={styles.root} contentContainerStyle={{ paddingTop: spacing.xl, paddingBottom: 110 }}>
         {user.role === 'TAILLEUR' ? (
-          <ProfileHero
-            name={user.name}
-            verified={tailor?.profile?.verified}
-            location={tailor?.profile?.location}
-            stats={[
-              { label: 'Modèles', value: tailor?.designsCount ?? 0 },
-              { label: 'Abonnés', value: tailor?.followersCount ?? 0 },
-            ]}
-            bio={tailor?.profile?.bio}
-            specialties={tailor?.profile?.specialties ?? []}
-          />
+          <>
+            <ProfileHero
+              name={user.name}
+              verified={tailor?.profile?.verified}
+              location={tailor?.profile?.location}
+              avatarUrl={tailor?.avatarUrl}
+              coverUrl={tailor?.profile?.coverUrl}
+              yearsExperience={tailor?.profile?.yearsExperience}
+              priceMin={tailor?.profile?.priceMin}
+              priceMax={tailor?.profile?.priceMax}
+              stats={[
+                { label: 'Modèles', value: tailor?.designsCount ?? 0 },
+                { label: 'Abonnés', value: tailor?.followersCount ?? 0 },
+                { label: "J'aime", value: tailor?.likesTotal ?? 0 },
+              ]}
+              bio={tailor?.profile?.bio}
+              specialties={tailor?.profile?.specialties ?? []}
+            />
+            <Pressable style={styles.editBtn} onPress={() => router.push('/profile/edit')}>
+              <Feather name="edit-2" size={15} color={colors.textOnDark} />
+              <Text style={styles.editText}>Modifier le profil</Text>
+            </Pressable>
+          </>
         ) : (
           <ProfileHero name={user.name} roleLabel="Client" />
         )}
@@ -109,6 +121,21 @@ function Row({
 const styles = StyleSheet.create({
   outer: { flex: 1, backgroundColor: colors.ink },
   root: { flex: 1, backgroundColor: colors.ink },
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    alignSelf: 'center',
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.xl,
+    borderRadius: radius.pill,
+    backgroundColor: colors.inkElevated,
+    borderWidth: 1,
+    borderColor: colors.inkLine,
+  },
+  editText: { color: colors.textOnDark, fontFamily: fonts.bodyBold, fontSize: 14 },
   list: { paddingHorizontal: spacing.lg, gap: 2, marginTop: spacing.md },
   row: {
     flexDirection: 'row',

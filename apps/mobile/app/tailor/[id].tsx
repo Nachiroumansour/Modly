@@ -50,9 +50,15 @@ export default function TailorProfile() {
           name={tailor.name}
           verified={tailor.profile?.verified}
           location={tailor.profile?.location}
+          avatarUrl={tailor.avatarUrl}
+          coverUrl={tailor.profile?.coverUrl}
+          yearsExperience={tailor.profile?.yearsExperience}
+          priceMin={tailor.profile?.priceMin}
+          priceMax={tailor.profile?.priceMax}
           stats={[
             { label: 'Modèles', value: tailor.designsCount },
             { label: 'Abonnés', value: tailor.followersCount },
+            { label: "J'aime", value: tailor.likesTotal },
           ]}
           bio={tailor.profile?.bio}
           specialties={tailor.profile?.specialties ?? []}
