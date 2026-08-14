@@ -5,6 +5,7 @@ import type { Design } from '../types';
 
 export type TailorProfile = {
   bio: string | null;
+  coverUrl: string | null;
   location: string | null;
   specialties: string[];
   yearsExperience: number | null;
@@ -22,6 +23,7 @@ export type TailorPayload = {
     profile: TailorProfile;
     followersCount: number;
     designsCount: number;
+    likesTotal: number;
   };
   designs: Design[];
   followedByMe: boolean;

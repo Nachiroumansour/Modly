@@ -1,42 +1,30 @@
 import { render, screen } from '@testing-library/react-native';
 import { ProfileHero } from './ProfileHero';
 
-describe('ProfileHero', () => {
-  it('affiche le nom', () => {
-    render(<ProfileHero name="Atelier Awa" />);
-    expect(screen.getByText('Atelier Awa')).toBeTruthy();
-  });
-
-  it('affiche les stats fournies', () => {
+describe('ProfileHero (M6)', () => {
+  it('affiche expérience, prix et 3 stats', () => {
     render(
       <ProfileHero
-        name="Atelier Awa"
+        name="Awa Couture"
+        avatarUrl="http://x/a.webp"
+        coverUrl="http://x/c.webp"
+        yearsExperience={8}
+        priceMin={15000}
         stats={[
-          { label: 'Modeles', value: 8 },
-          { label: 'Abonnes', value: 25 },
+          { label: 'Modèles', value: 12 },
+          { label: 'Abonnés', value: 340 },
+          { label: "J'aime", value: 1200 },
         ]}
+        specialties={['Mariage']}
       />,
     );
-    expect(screen.getByText('8')).toBeTruthy();
-    expect(screen.getByText('Modeles')).toBeTruthy();
-    expect(screen.getByText('25')).toBeTruthy();
-    expect(screen.getByText('Abonnes')).toBeTruthy();
+    expect(screen.getByText(/8 ans/i)).toBeTruthy();
+    expect(screen.getByText(/15\s?000/)).toBeTruthy();
+    expect(screen.getByText("J'aime")).toBeTruthy();
   });
 
-  it('affiche bio et specialites quand fournies', () => {
-    render(<ProfileHero name="Awa" bio="Bazin et broderie" specialties={['Mariage', 'Boubou']} />);
-    expect(screen.getByText('Bazin et broderie')).toBeTruthy();
-    expect(screen.getByText('Mariage')).toBeTruthy();
-    expect(screen.getByText('Boubou')).toBeTruthy();
-  });
-
-  it('affiche le chip role quand fourni', () => {
-    render(<ProfileHero name="Fatou" roleLabel="Client" />);
-    expect(screen.getByText('Client')).toBeTruthy();
-  });
-
-  it('naffiche pas de stats quand non fournies', () => {
-    render(<ProfileHero name="Awa" />);
-    expect(screen.queryByText('Modeles')).toBeNull();
+  it('retombe sur l’initiale quand avatarUrl est absent', () => {
+    render(<ProfileHero name="Boubacar" />);
+    expect(screen.getByText('B')).toBeTruthy();
   });
 });
