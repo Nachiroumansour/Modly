@@ -10,6 +10,7 @@ import { tailorsRouter } from './modules/tailors/tailors.routes.js';
 import { collectionsRouter } from './modules/collections/collections.routes.js';
 import { commentsRouter } from './modules/comments/comments.routes.js';
 import { notificationsRouter, pushTokensRouter } from './modules/notifications/notifications.routes.js';
+import { reportsRouter } from './modules/reports/reports.routes.js';
 import { usersRouter } from './modules/users/users.routes.js';
 
 export function createApp() {
@@ -35,6 +36,7 @@ export function createApp() {
   app.use('/tailors', tailorsRouter);
   app.use('/client-records', clientRecordsRouter);
   app.use('/orders', ordersRouter);
+  app.use('/reports', reportsRouter);
 
   app.use((_req, res) => {
     res.status(404).json({
