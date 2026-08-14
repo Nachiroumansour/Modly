@@ -78,6 +78,10 @@ tailorsRouter.get('/:id', optionalAuth, async (req, res) => {
         where: { followerId_tailorId: { followerId: viewerId, tailorId: user.id } },
       })) !== null
     : false;
+  const likesAgg = await prisma.design.aggregate({
+    where: { tailorId: user.id },
+    _sum: { likesCount: true },
+  });
   res.json({
     tailor: {
       id: user.id,
@@ -87,6 +91,7 @@ tailorsRouter.get('/:id', optionalAuth, async (req, res) => {
       profile: user.tailorProfile,
       followersCount: user._count.followers,
       designsCount: user._count.designs,
+      likesTotal: likesAgg._sum.likesCount ?? 0,
     },
     designs: designs.map(toApiDesign),
     followedByMe,
