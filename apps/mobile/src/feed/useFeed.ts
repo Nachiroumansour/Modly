@@ -10,13 +10,15 @@ export type FeedScope = 'foryou' | 'following';
 export function useFeed(scope: FeedScope = 'foryou') {
   const { token } = useAuth();
   const query = useInfiniteQuery({
-    queryKey: ['feed', scope],
+    queryKey: ['feed', scope, token ? 'auth' : 'anon'],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) => {
       const parts = [`limit=${LIMIT}`];
       if (pageParam) parts.push(`cursor=${pageParam}`);
       if (scope === 'following') parts.push('following=1');
-      return apiFetch<FeedPage>(`/designs?${parts.join('&')}`, scope === 'following' ? { token } : {});
+      // On envoie le token quand il existe : le serveur personnalise « Pour toi »
+      // selon les centres d'intérêt du viewer (invité → feed chronologique).
+      return apiFetch<FeedPage>(`/designs?${parts.join('&')}`, token ? { token } : {});
     },
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
