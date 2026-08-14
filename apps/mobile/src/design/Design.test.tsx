@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import type { ComponentProps } from 'react';
 import { DesignScreen } from './DesignScreen';
 import { useDesign } from './useDesign';
 import { useSimilar } from './useSimilar';
@@ -68,9 +70,18 @@ beforeEach(() => {
   mockedUseSimilar.mockReturnValue({ designs: [], isLoading: false, isError: false });
 });
 
+function renderScreen(props: ComponentProps<typeof DesignScreen>) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <DesignScreen {...props} />
+    </QueryClientProvider>,
+  );
+}
+
 describe('DesignScreen', () => {
   it('affiche le titre et la barre d actions', () => {
-    render(<DesignScreen id="d1" />);
+    renderScreen({ id: 'd1' });
     expect(screen.getByText('Ensemble Korite')).toBeTruthy();
     expect(screen.getByTestId('action-like')).toBeTruthy();
     expect(screen.getByTestId('action-save')).toBeTruthy();
@@ -78,7 +89,7 @@ describe('DesignScreen', () => {
 
   it('ouvre le profil du tailleur', () => {
     const onTailor = jest.fn();
-    render(<DesignScreen id="d1" onTailor={onTailor} />);
+    renderScreen({ id: 'd1', onTailor });
     fireEvent.press(screen.getByText(/Atelier Awa/));
     expect(onTailor).toHaveBeenCalledWith('t1');
   });
@@ -90,14 +101,14 @@ describe('DesignScreen', () => {
       isLoading: false,
       isError: false,
     });
-    render(<DesignScreen id="d1" onOpenDesign={onOpenDesign} />);
+    renderScreen({ id: 'd1', onOpenDesign });
     expect(screen.getByText(/Explorer davantage/i)).toBeTruthy();
     fireEvent.press(screen.getByText('Boubou fete'));
     expect(onOpenDesign).toHaveBeenCalledWith('d2');
   });
 
   it('ouvre le popup commentaires en tapant licone commentaire', () => {
-    render(<DesignScreen id="d1" />);
+    renderScreen({ id: 'd1' });
     expect(screen.queryByText('Commentaires')).toBeNull();
     fireEvent.press(screen.getByTestId('action-comment'));
     expect(screen.getByText('Commentaires')).toBeTruthy();
