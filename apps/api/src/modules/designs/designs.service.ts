@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import type { DesignCategory } from '@moodly/shared';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 import { createNotification } from '../notifications/notifications.service.js';
@@ -36,6 +37,67 @@ export function toApiDesign(design: DesignWithViewer) {
     likedByMe: likes.length > 0,
     bookmarkedByMe: bookmarks.length > 0,
   };
+}
+
+/**
+ * Feed « Pour toi » personnalisé (M7, option a) : d'abord les modèles des
+ * catégories préférées (récents), puis tout le reste (récents) — on met en
+ * avant sans exclure. Pagination keyset en 2 phases ; le curseur encode la
+ * phase : `p:<id>` (préférés) ou `o:<id>` (autres ; `o:` = début des autres).
+ */
+export async function getForYouFeed(params: {
+  viewerId: string;
+  interests: DesignCategory[];
+  limit: number;
+  cursor?: string;
+}) {
+  const { viewerId, interests, limit, cursor } = params;
+  const orderBy = [{ createdAt: 'desc' as const }, { id: 'desc' as const }];
+  const include = designInclude(viewerId);
+
+  const phase = cursor ? cursor[0] : 'p';
+  const cursorId = cursor && cursor.length > 2 ? cursor.slice(2) : undefined;
+
+  function fetchPhase(ph: 'p' | 'o', id: string | undefined, take: number) {
+    const category =
+      ph === 'p' ? { in: interests } : { notIn: interests };
+    return prisma.design.findMany({
+      where: { category },
+      orderBy,
+      take: take + 1,
+      ...(id ? { cursor: { id }, skip: 1 } : {}),
+      include,
+    });
+  }
+
+  if (phase === 'o') {
+    const rows = await fetchPhase('o', cursorId, limit);
+    return {
+      designs: rows.slice(0, limit).map(toApiDesign),
+      nextCursor: rows.length > limit ? `o:${rows[limit - 1]!.id}` : null,
+    };
+  }
+
+  // Phase préférés.
+  const pref = await fetchPhase('p', cursorId, limit);
+  if (pref.length > limit) {
+    return {
+      designs: pref.slice(0, limit).map(toApiDesign),
+      nextCursor: `p:${pref[limit - 1]!.id}`,
+    };
+  }
+
+  // Préférés épuisés dans cette page → compléter avec les autres depuis le début.
+  const remainder = limit - pref.length;
+  const others = await fetchPhase('o', undefined, Math.max(remainder, 0));
+  const combined = [...pref, ...others.slice(0, remainder)].map(toApiDesign);
+  let nextCursor: string | null = null;
+  if (remainder > 0) {
+    nextCursor = others.length > remainder ? `o:${others[remainder - 1]!.id}` : null;
+  } else {
+    nextCursor = others.length > 0 ? 'o:' : null;
+  }
+  return { designs: combined, nextCursor };
 }
 
 export async function getSimilarDesigns(designId: string, viewerId: string, limit: number) {

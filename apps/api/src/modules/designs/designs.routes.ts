@@ -11,6 +11,7 @@ import {
   addReaction,
   designInclude,
   ensureDesignExists,
+  getForYouFeed,
   getThreadedComments,
   removeReaction,
   getSimilarDesigns,
@@ -94,6 +95,19 @@ designsRouter.get('/', optionalAuth, async (req, res) => {
     const hasMore = rows.length > limit;
     res.json({ designs: rows.slice(0, limit).map(toApiDesign), page, hasMore });
     return;
+  }
+
+  // Feed « Pour toi » personnalisé : par défaut (sans filtre), pour un viewer
+  // connecté qui a des centres d'intérêt, on met en avant ses catégories.
+  if (!category && !search && !isFollowing && req.user) {
+    const me = await prisma.user.findUnique({
+      where: { id: viewerId },
+      select: { interests: true },
+    });
+    if (me && me.interests.length > 0) {
+      res.json(await getForYouFeed({ viewerId, interests: me.interests, limit, cursor }));
+      return;
+    }
   }
 
   const rows = await prisma.design.findMany({

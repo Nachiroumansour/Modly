@@ -6,12 +6,14 @@ export async function registerUser(
   app: Express,
   role: 'TAILLEUR' | 'CLIENT',
   phone: string,
+  interests?: string[],
 ) {
   const res = await request(app).post('/auth/register').send({
     phone,
     password: 'secret123',
     name: role === 'TAILLEUR' ? 'Mamadou' : 'Fatou',
     role,
+    ...(interests ? { interests } : {}),
   });
   if (res.status !== 201) {
     throw new Error(`registerUser a échoué : ${res.status} ${JSON.stringify(res.body)}`);
