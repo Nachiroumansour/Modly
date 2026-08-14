@@ -48,8 +48,8 @@ cohérent avec l'ADN de l'app.
 ### Upload photos — `POST /me/photos` (`users.routes.ts`)
 
 - `requireAuth` + `requireRole('TAILLEUR')`.
-- `multer` (mémoire, réutilise la config type de `designs.routes.ts` : limite taille,
-  filtre image → 400 `IMAGE_INVALIDE` sinon) avec
+- `multer` (mémoire, réutilise la config de `designs.routes.ts` : limite 5 Mo,
+  filtre mime → 400 `FORMAT_IMAGE_INVALIDE` sinon) avec
   `upload.fields([{ name: 'avatar', maxCount: 1 }, { name: 'cover', maxCount: 1 }])`.
 - Au moins un des deux fichiers requis, sinon 400 `IMAGE_REQUISE`.
 - Chaque fichier passe par `ImageStorage.save(buffer)` → `{ url }`. On écrit `avatarUrl`
