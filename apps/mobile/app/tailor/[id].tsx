@@ -1,9 +1,12 @@
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../src/auth/AuthContext';
 import { MasonryColumns } from '../../src/feed/masonry';
+import { BlockButton } from '../../src/moderation/BlockButton';
+import { ReportSheet } from '../../src/moderation/ReportSheet';
 import { ProfileHero } from '../../src/profile/ProfileHero';
 import { useFollow, useTailorProfile } from '../../src/tailors/hooks';
 import { colors, fonts, radius, spacing } from '../../src/theme';
@@ -16,6 +19,7 @@ export default function TailorProfile() {
   const { user } = useAuth();
   const { tailor, designs, followedByMe, isLoading, isError, refetch } = useTailorProfile(id);
   const { toggleFollow, following } = useFollow(id);
+  const [reportOpen, setReportOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -65,15 +69,22 @@ export default function TailorProfile() {
         />
 
         {canFollow ? (
-          <Pressable
-            style={[styles.follow, followedByMe && styles.followActive]}
-            onPress={() => toggleFollow(followedByMe)}
-            disabled={following}
-          >
-            <Text style={[styles.followText, followedByMe && styles.followTextActive]}>
-              {followedByMe ? 'Abonné' : 'Suivre'}
-            </Text>
-          </Pressable>
+          <>
+            <Pressable
+              style={[styles.follow, followedByMe && styles.followActive]}
+              onPress={() => toggleFollow(followedByMe)}
+              disabled={following}
+            >
+              <Text style={[styles.followText, followedByMe && styles.followTextActive]}>
+                {followedByMe ? 'Abonné' : 'Suivre'}
+              </Text>
+            </Pressable>
+            <BlockButton userId={tailor.id} />
+            <Pressable style={styles.reportLink} onPress={() => setReportOpen(true)}>
+              <Feather name="flag" size={13} color={colors.textOnDarkMuted} />
+              <Text style={styles.reportText}>Signaler</Text>
+            </Pressable>
+          </>
         ) : null}
 
         <Text style={styles.sectionTitle}>Ses modèles</Text>
@@ -83,6 +94,13 @@ export default function TailorProfile() {
           <MasonryColumns designs={designs} onOpen={(d) => router.push(`/design/${d}`)} />
         )}
       </ScrollView>
+
+      <ReportSheet
+        visible={reportOpen}
+        targetType="USER"
+        targetId={tailor.id}
+        onClose={() => setReportOpen(false)}
+      />
     </View>
   );
 }
@@ -103,6 +121,8 @@ const styles = StyleSheet.create({
   followActive: { backgroundColor: colors.inkElevated, borderWidth: 1, borderColor: colors.inkLine },
   followText: { color: colors.textOnDark, fontFamily: fonts.bodyBold, fontSize: 15 },
   followTextActive: { color: colors.textOnDarkMuted },
+  reportLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, alignSelf: 'center', marginTop: spacing.sm, marginBottom: spacing.md, paddingVertical: spacing.xs },
+  reportText: { color: colors.textOnDarkMuted, fontFamily: fonts.body, fontSize: 13 },
   sectionTitle: { color: colors.textOnDark, fontFamily: fonts.bodyHeavy, fontSize: 16, marginBottom: spacing.md, paddingHorizontal: spacing.xs },
   empty: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyRegular, fontSize: 14, paddingHorizontal: spacing.xs },
 });
