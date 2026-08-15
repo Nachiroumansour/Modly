@@ -6,5 +6,11 @@ dist/
 uploads/
 test-uploads/
 
+# Tooling agents / IA (local uniquement)
+.agents/
+.claude/
+_bmad/
+Modly_Cahier_des_Charges.docx
+
 # macOS
 .DS_Store

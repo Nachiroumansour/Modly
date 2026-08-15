@@ -1,9 +1,12 @@
 import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/AuthContext';
 import { MasonryColumns } from '../feed/masonry';
+import { useBlock } from '../moderation/hooks';
+import { ReportSheet } from '../moderation/ReportSheet';
+import type { ReportTargetType } from '../moderation/reasons';
 import { colors, fonts, radius, spacing } from '../theme';
 import { Button } from '../ui/Button';
 import { ErrorRetry } from '../ui/ErrorRetry';
@@ -32,6 +35,9 @@ export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor, onO
   const authed = Boolean(user);
   const gate = onRequireAuth ?? (() => {});
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState<{ type: ReportTargetType; id: string } | null>(null);
+  const { block } = useBlock();
 
   if (isLoading) {
     return (
@@ -73,6 +79,13 @@ export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor, onO
               <Feather name="chevron-left" size={26} color={colors.textOnDark} />
             </Pressable>
           ) : null}
+          <Pressable
+            onPress={() => (authed ? setMenuOpen(true) : gate())}
+            style={[styles.more, { top: insets.top + spacing.sm }]}
+            hitSlop={10}
+          >
+            <Feather name="more-horizontal" size={24} color={colors.textOnDark} />
+          </Pressable>
         </View>
 
         <View style={styles.body}>
@@ -122,6 +135,52 @@ export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor, onO
         authed={authed}
         onRequireAuth={gate}
       />
+
+      <Modal visible={menuOpen} transparent animationType="slide" onRequestClose={() => setMenuOpen(false)}>
+        <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
+          <View style={styles.menuSheet}>
+            <Pressable
+              style={styles.menuRow}
+              onPress={() => {
+                setMenuOpen(false);
+                setReportTarget({ type: 'DESIGN', id: design.id });
+              }}
+            >
+              <Feather name="flag" size={16} color={colors.textOnDark} />
+              <Text style={styles.menuText}>Signaler le modèle</Text>
+            </Pressable>
+            <Pressable
+              style={styles.menuRow}
+              onPress={() => {
+                setMenuOpen(false);
+                setReportTarget({ type: 'USER', id: design.tailor.id });
+              }}
+            >
+              <Feather name="flag" size={16} color={colors.textOnDark} />
+              <Text style={styles.menuText}>Signaler le tailleur</Text>
+            </Pressable>
+            <Pressable
+              style={styles.menuRow}
+              onPress={() => {
+                setMenuOpen(false);
+                block(design.tailor.id);
+              }}
+            >
+              <Feather name="slash" size={16} color={colors.danger} />
+              <Text style={[styles.menuText, { color: colors.danger }]}>Bloquer le tailleur</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {reportTarget ? (
+        <ReportSheet
+          visible
+          targetType={reportTarget.type}
+          targetId={reportTarget.id}
+          onClose={() => setReportTarget(null)}
+        />
+      ) : null}
     </View>
   );
 }
@@ -139,6 +198,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  more: {
+    position: 'absolute',
+    right: spacing.md,
+    width: 40,
+    height: 40,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  menuSheet: {
+    backgroundColor: colors.inkElevated,
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    padding: spacing.lg,
+  },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
+  menuText: { color: colors.textOnDark, fontFamily: fonts.body, fontSize: 16 },
   body: { padding: spacing.xl },
   title: { color: colors.textOnDark, fontFamily: fonts.displayBold, fontSize: 28, lineHeight: 32 },
   author: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },

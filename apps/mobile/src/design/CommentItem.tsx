@@ -1,5 +1,7 @@
 import { Feather } from '@expo/vector-icons';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ReportSheet } from '../moderation/ReportSheet';
 import { colors, fonts, radius, spacing } from '../theme';
 import type { ApiComment } from '../types';
 
@@ -18,6 +20,7 @@ export function CommentItem({ comment, viewerId, designTailorId, onLike, onReply
   const isMine = comment.user.id === viewerId;
   const canPin = isRoot && viewerId === designTailorId;
   const initial = comment.user.name.trim().charAt(0).toUpperCase();
+  const [reportOpen, setReportOpen] = useState(false);
 
   return (
     <View style={[styles.item, !isRoot && styles.reply]}>
@@ -56,7 +59,21 @@ export function CommentItem({ comment, viewerId, designTailorId, onLike, onReply
               </Text>
             </Pressable>
           ) : null}
+          {!isMine ? (
+            <Pressable testID={`comment-report-${comment.id}`} onPress={() => setReportOpen(true)}>
+              <Text style={styles.actionText}>Signaler</Text>
+            </Pressable>
+          ) : null}
         </View>
+
+        {reportOpen ? (
+          <ReportSheet
+            visible
+            targetType="COMMENT"
+            targetId={comment.id}
+            onClose={() => setReportOpen(false)}
+          />
+        ) : null}
 
         {comment.replies.map((r) => (
           <CommentItem

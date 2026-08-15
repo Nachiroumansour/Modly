@@ -5,12 +5,14 @@ import { DESIGN_CATEGORIES } from '@moodly/shared';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 import { storage } from '../../lib/storage.js';
+import { getBlockedUserIds } from '../blocks/blocks.service.js';
 import { optionalAuth, requireAuth, requireRole } from '../../middleware/auth.js';
 import {
   addComment,
   addReaction,
   designInclude,
   ensureDesignExists,
+  getForYouFeed,
   getThreadedComments,
   removeReaction,
   getSimilarDesigns,
@@ -79,6 +81,15 @@ designsRouter.get('/', optionalAuth, async (req, res) => {
     where.tailorId = { in: follows.map((f) => f.tailorId) };
   }
 
+  // Blocage : exclure les modèles des utilisateurs en relation de blocage.
+  const blockedIds = await getBlockedUserIds(viewerId);
+  if (blockedIds.length) {
+    where.tailorId =
+      where.tailorId && typeof where.tailorId === 'object'
+        ? { ...(where.tailorId as Record<string, unknown>), notIn: blockedIds }
+        : { notIn: blockedIds };
+  }
+
   if (page !== undefined) {
     const orderBy =
       sort === 'tendance'
@@ -94,6 +105,19 @@ designsRouter.get('/', optionalAuth, async (req, res) => {
     const hasMore = rows.length > limit;
     res.json({ designs: rows.slice(0, limit).map(toApiDesign), page, hasMore });
     return;
+  }
+
+  // Feed « Pour toi » personnalisé : par défaut (sans filtre), pour un viewer
+  // connecté qui a des centres d'intérêt, on met en avant ses catégories.
+  if (!category && !search && !isFollowing && req.user) {
+    const me = await prisma.user.findUnique({
+      where: { id: viewerId },
+      select: { interests: true },
+    });
+    if (me && me.interests.length > 0) {
+      res.json(await getForYouFeed({ viewerId, interests: me.interests, limit, cursor, blockedIds }));
+      return;
+    }
   }
 
   const rows = await prisma.design.findMany({
@@ -217,8 +241,9 @@ designsRouter.get('/:id', optionalAuth, async (req, res) => {
   if (!design) {
     throw new ApiError(404, 'INTROUVABLE', 'Modèle introuvable.');
   }
+  const blockedIds = await getBlockedUserIds(viewerId);
   const comments = await prisma.comment.findMany({
-    where: { designId: design.id },
+    where: { designId: design.id, ...(blockedIds.length ? { userId: { notIn: blockedIds } } : {}) },
     orderBy: { createdAt: 'desc' },
     take: 50,
     include: { user: { select: { id: true, name: true, avatarUrl: true } } },

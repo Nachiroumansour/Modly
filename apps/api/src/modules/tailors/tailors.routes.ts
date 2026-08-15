@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { Router } from 'express';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
+import { getBlockedUserIds } from '../blocks/blocks.service.js';
 import { optionalAuth, requireAuth } from '../../middleware/auth.js';
 import { designInclude, toApiDesign } from '../designs/designs.service.js';
 import { createNotification } from '../notifications/notifications.service.js';
@@ -24,6 +25,10 @@ tailorsRouter.post('/:id/follow', requireAuth, async (req, res) => {
     throw new ApiError(400, 'ACTION_INVALIDE', 'Tu ne peux pas te suivre toi-même.');
   }
   await ensureTailorExists(tailorId);
+  const blocked = await getBlockedUserIds(req.user!.sub);
+  if (blocked.includes(tailorId)) {
+    throw new ApiError(403, 'ACTION_IMPOSSIBLE', 'Action impossible : cet utilisateur est bloqué.');
+  }
   try {
     await prisma.follow.create({ data: { followerId: req.user!.sub, tailorId } });
     await createNotification({
@@ -78,6 +83,10 @@ tailorsRouter.get('/:id', optionalAuth, async (req, res) => {
         where: { followerId_tailorId: { followerId: viewerId, tailorId: user.id } },
       })) !== null
     : false;
+  const likesAgg = await prisma.design.aggregate({
+    where: { tailorId: user.id },
+    _sum: { likesCount: true },
+  });
   res.json({
     tailor: {
       id: user.id,
@@ -87,6 +96,7 @@ tailorsRouter.get('/:id', optionalAuth, async (req, res) => {
       profile: user.tailorProfile,
       followersCount: user._count.followers,
       designsCount: user._count.designs,
+      likesTotal: likesAgg._sum.likesCount ?? 0,
     },
     designs: designs.map(toApiDesign),
     followedByMe,
