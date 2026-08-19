@@ -5,6 +5,7 @@ import {
   MEASUREMENT_SOURCES,
   ORDER_STATUSES,
   PAYMENT_STATUSES,
+  POST_TYPES,
   ROLES,
 } from './index.js';
 
@@ -38,5 +39,11 @@ describe('constantes partagées Moodly', () => {
   it('expose les sources de mesure (MANUELLE, IA)', () => {
     expect(MEASUREMENT_SOURCES).toContain('MANUELLE');
     expect(MEASUREMENT_SOURCES).toContain('IA');
+  });
+});
+
+describe('POST_TYPES', () => {
+  it('contient les deux statuts, INSPIRATION en premier (défaut)', () => {
+    expect(POST_TYPES).toEqual(['INSPIRATION', 'ORIGINAL']);
   });
 });

@@ -13,6 +13,9 @@ export const DESIGN_CATEGORIES = [
 ] as const;
 export type DesignCategory = (typeof DESIGN_CATEGORIES)[number];
 
+export const POST_TYPES = ['INSPIRATION', 'ORIGINAL'] as const;
+export type PostType = (typeof POST_TYPES)[number];
+
 export const ORDER_STATUSES = [
   'EN_ATTENTE',
   'TISSU_RECU',
