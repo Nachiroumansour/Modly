@@ -74,6 +74,11 @@ enum DesignCategory {
   MAGAL
 }
 
+enum PostType {
+  INSPIRATION
+  ORIGINAL
+}
+
 model Design {
   id             String         @id @default(cuid())
   tailorId       String
@@ -81,6 +86,8 @@ model Design {
   title          String
   description    String?
   category       DesignCategory
+  postType       PostType       @default(INSPIRATION)
+  sourceCredit   String?
   imageUrl       String
   imageWidth     Int
   imageHeight    Int
