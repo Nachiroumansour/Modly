@@ -4,6 +4,7 @@ import type {
   MeasurementSource,
   OrderStatus,
   PaymentStatus,
+  PostType,
   Role,
 } from '@moodly/shared';
 
@@ -32,6 +33,8 @@ export type Design = {
   title: string;
   description: string | null;
   category: DesignCategory;
+  postType: PostType;
+  sourceCredit: string | null;
   imageUrl: string;
   imageWidth: number;
   imageHeight: number;

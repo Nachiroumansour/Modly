@@ -42,6 +42,8 @@ function makeDesign(over: Partial<Design> = {}): Design {
     title: 'Ensemble Korite',
     description: 'Bazin riche',
     category: 'KORITE',
+    postType: 'INSPIRATION',
+    sourceCredit: null,
     imageUrl: 'http://x/img.webp',
     imageWidth: 600,
     imageHeight: 800,

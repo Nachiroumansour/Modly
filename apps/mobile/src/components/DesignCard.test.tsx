@@ -11,6 +11,8 @@ const base: Design = {
   title: 'Boubou Tabaski',
   description: null,
   category: 'TABASKI',
+  postType: 'INSPIRATION',
+  sourceCredit: null,
   imageUrl: 'http://x/img.webp',
   imageWidth: 600,
   imageHeight: 900,
