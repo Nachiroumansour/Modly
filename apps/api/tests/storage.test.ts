@@ -18,4 +18,13 @@ describe('stockage local des images', () => {
   it("rejette un buffer qui n'est pas une image", async () => {
     await expect(storage.save(Buffer.from('pas une image'))).rejects.toThrow();
   });
+
+  it('applique un filigrane quand demandé, sans casser url/dimensions', async () => {
+    const buffer = await makeTestImage(600, 800);
+    const stored = await storage.save(buffer, { watermark: '© Atelier Awa · Modly' });
+    expect(stored.width).toBe(600);
+    expect(stored.height).toBe(800);
+    expect(stored.url).toMatch(/\/uploads\/[\w-]+\.webp$/);
+    expect(stored.blurhash).toEqual(expect.any(String));
+  });
 });
