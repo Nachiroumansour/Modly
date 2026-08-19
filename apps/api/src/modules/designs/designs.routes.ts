@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
-import { DESIGN_CATEGORIES } from '@moodly/shared';
+import { DESIGN_CATEGORIES, POST_TYPES } from '@moodly/shared';
 import { ApiError } from '../../lib/errors.js';
 import { prisma } from '../../lib/prisma.js';
 import { storage } from '../../lib/storage.js';
@@ -32,6 +32,8 @@ const createDesignSchema = z.object({
   title: z.string().min(1, 'Le titre est requis.').max(120),
   description: z.string().max(1000).optional(),
   category: z.enum(DESIGN_CATEGORIES),
+  postType: z.enum(POST_TYPES).default('INSPIRATION'),
+  sourceCredit: z.string().max(200).optional(),
 });
 
 const feedQuerySchema = z.object({
@@ -154,7 +156,22 @@ designsRouter.post(
       }
     }
 
-    const stored = await Promise.all(files.map((f) => storage.save(f.buffer)));
+    const isOriginal = parsed.data.postType === 'ORIGINAL';
+    // Cohérence : une création originale n'a pas de source externe.
+    const sourceCredit = isOriginal ? null : (parsed.data.sourceCredit ?? null);
+
+    let watermark: string | undefined;
+    if (isOriginal) {
+      const tailor = await prisma.user.findUnique({
+        where: { id: req.user!.sub },
+        select: { name: true },
+      });
+      watermark = `© ${tailor?.name ?? 'Modly'} · Modly`;
+    }
+
+    const stored = await Promise.all(
+      files.map((f) => storage.save(f.buffer, watermark ? { watermark } : undefined)),
+    );
     const cover = stored[0]!;
 
     const design = await prisma.design.create({
@@ -163,6 +180,8 @@ designsRouter.post(
         title: parsed.data.title,
         description: parsed.data.description,
         category: parsed.data.category,
+        postType: parsed.data.postType,
+        sourceCredit,
         imageUrl: cover.url,
         imageWidth: cover.width,
         imageHeight: cover.height,
