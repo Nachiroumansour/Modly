@@ -13,4 +13,8 @@ describe('watermarkBuffer', () => {
     // Le rendu diffère de l'original (des pixels ont été modifiés).
     expect(out.equals(src)).toBe(false);
   });
+
+  it("rejette un buffer qui n'est pas une image plutôt que de renvoyer l'original", async () => {
+    await expect(watermarkBuffer(Buffer.from('pas une image'), 'x')).rejects.toThrow();
+  });
 });

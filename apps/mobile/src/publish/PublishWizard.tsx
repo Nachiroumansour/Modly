@@ -150,6 +150,7 @@ export default function PublishWizard() {
               placeholderTextColor={colors.textOnDarkMuted}
               style={styles.input}
               autoFocus
+              maxLength={120}
             />
             <Text style={[styles.label, { marginTop: spacing.xl }]}>Catégorie</Text>
             <View style={styles.chips}>
@@ -199,6 +200,7 @@ export default function PublishWizard() {
                   placeholder="Crédit ou lien (optionnel)"
                   placeholderTextColor={colors.textOnDarkMuted}
                   style={styles.input}
+                  maxLength={200}
                 />
               </>
             ) : (

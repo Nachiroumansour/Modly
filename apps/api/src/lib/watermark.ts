@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import { ApiError } from './errors.js';
 
 function escapeXml(value: string): string {
   return value.replace(/[<>&'"]/g, (c) =>
@@ -14,7 +15,11 @@ function escapeXml(value: string): string {
 export async function watermarkBuffer(buffer: Buffer, label: string): Promise<Buffer> {
   const image = sharp(buffer);
   const { width, height } = await image.metadata();
-  if (!width || !height) return buffer;
+  if (!width || !height) {
+    // Une ORIGINALE ne doit jamais être stockée sans filigrane : on échoue fort
+    // plutôt que de renvoyer discrètement le buffer non protégé.
+    throw new ApiError(400, 'IMAGE_INVALIDE', 'Impossible de lire cette image.');
+  }
   const fontSize = Math.max(12, Math.round(width * 0.035));
   const pad = Math.round(fontSize * 0.8);
   const strokeWidth = Math.max(1, Math.round(fontSize / 18));
