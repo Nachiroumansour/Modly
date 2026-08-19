@@ -68,4 +68,14 @@ describe('DesignCard', () => {
     render(<DesignCard design={base} onPress={() => {}} />);
     expect(screen.queryByTestId('multi-indicator')).toBeNull();
   });
+
+  it('affiche le badge création originale pour un ORIGINAL', () => {
+    render(<DesignCard design={{ ...base, postType: 'ORIGINAL' }} onPress={() => {}} />);
+    expect(screen.getByTestId('original-badge')).toBeTruthy();
+  });
+
+  it('pas de badge original pour une inspiration', () => {
+    render(<DesignCard design={{ ...base, postType: 'INSPIRATION' }} onPress={() => {}} />);
+    expect(screen.queryByTestId('original-badge')).toBeNull();
+  });
 });
