@@ -30,6 +30,11 @@ export function DesignCard({ design, onPress, onLongPress }: Props) {
             <Feather name="copy" size={13} color={colors.textOnDark} />
           </View>
         ) : null}
+        {design.postType === 'ORIGINAL' ? (
+          <View testID="original-badge" style={styles.original}>
+            <Text style={styles.originalMark}>✦</Text>
+          </View>
+        ) : null}
       </View>
       <Text style={styles.title} numberOfLines={1}>
         {design.title}
@@ -60,4 +65,16 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     marginHorizontal: spacing.xs,
   },
+  original: {
+    position: 'absolute',
+    bottom: spacing.sm,
+    left: spacing.sm,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(23,18,15,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  originalMark: { color: colors.accent, fontFamily: fonts.bodyHeavy, fontSize: 12 },
 });

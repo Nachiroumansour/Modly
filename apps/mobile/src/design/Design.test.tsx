@@ -42,6 +42,8 @@ function makeDesign(over: Partial<Design> = {}): Design {
     title: 'Ensemble Korite',
     description: 'Bazin riche',
     category: 'KORITE',
+    postType: 'INSPIRATION',
+    sourceCredit: null,
     imageUrl: 'http://x/img.webp',
     imageWidth: 600,
     imageHeight: 800,
@@ -112,5 +114,29 @@ describe('DesignScreen', () => {
     expect(screen.queryByText('Commentaires')).toBeNull();
     fireEvent.press(screen.getByTestId('action-comment'));
     expect(screen.getByText('Commentaires')).toBeTruthy();
+  });
+
+  it('affiche le badge Création originale pour un ORIGINAL', () => {
+    mockedUseSimilar.mockReturnValue({ designs: [] } as unknown as ReturnType<typeof useSimilar>);
+    mockedUseDesign.mockReturnValue({
+      design: makeDesign({ postType: 'ORIGINAL' }),
+      isLoading: false,
+      isError: false,
+      refetch: jest.fn(),
+    } as unknown as ReturnType<typeof useDesign>);
+    renderScreen({ id: 'd1' });
+    expect(screen.getByText(/Création originale/)).toBeTruthy();
+  });
+
+  it('affiche la source pour une inspiration créditée', () => {
+    mockedUseSimilar.mockReturnValue({ designs: [] } as unknown as ReturnType<typeof useSimilar>);
+    mockedUseDesign.mockReturnValue({
+      design: makeDesign({ postType: 'INSPIRATION', sourceCredit: 'Pinterest / @awa' }),
+      isLoading: false,
+      isError: false,
+      refetch: jest.fn(),
+    } as unknown as ReturnType<typeof useDesign>);
+    renderScreen({ id: 'd1' });
+    expect(screen.getByText(/Source : Pinterest \/ @awa/)).toBeTruthy();
   });
 });

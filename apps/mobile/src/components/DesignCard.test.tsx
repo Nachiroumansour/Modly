@@ -11,6 +11,8 @@ const base: Design = {
   title: 'Boubou Tabaski',
   description: null,
   category: 'TABASKI',
+  postType: 'INSPIRATION',
+  sourceCredit: null,
   imageUrl: 'http://x/img.webp',
   imageWidth: 600,
   imageHeight: 900,
@@ -65,5 +67,15 @@ describe('DesignCard', () => {
   it('n’affiche pas l’indicateur pour une seule image', () => {
     render(<DesignCard design={base} onPress={() => {}} />);
     expect(screen.queryByTestId('multi-indicator')).toBeNull();
+  });
+
+  it('affiche le badge création originale pour un ORIGINAL', () => {
+    render(<DesignCard design={{ ...base, postType: 'ORIGINAL' }} onPress={() => {}} />);
+    expect(screen.getByTestId('original-badge')).toBeTruthy();
+  });
+
+  it('pas de badge original pour une inspiration', () => {
+    render(<DesignCard design={{ ...base, postType: 'INSPIRATION' }} onPress={() => {}} />);
+    expect(screen.queryByTestId('original-badge')).toBeNull();
   });
 });

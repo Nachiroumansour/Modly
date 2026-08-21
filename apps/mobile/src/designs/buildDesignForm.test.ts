@@ -21,6 +21,7 @@ describe('buildDesignForm', () => {
       title: 'Carrousel',
       category: 'ENSEMBLE',
       description: 'desc',
+      postType: 'INSPIRATION',
     });
     const media = parts.filter((p) => p[0] === 'media');
     expect(media).toHaveLength(2);
@@ -32,7 +33,7 @@ describe('buildDesignForm', () => {
   });
 
   it('omet la description vide', () => {
-    const parts = collect({ uris: ['file:///a.jpg'], title: 'T', category: 'ROBE' });
+    const parts = collect({ uris: ['file:///a.jpg'], title: 'T', category: 'ROBE', postType: 'INSPIRATION' });
     expect(parts.some((p) => p[0] === 'description')).toBe(false);
   });
 });

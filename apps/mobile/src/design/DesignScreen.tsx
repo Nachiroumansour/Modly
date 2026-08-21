@@ -99,6 +99,17 @@ export function DesignScreen({ id, onRequireAuth, onBack, onOrder, onTailor, onO
             <Feather name="chevron-right" size={18} color={colors.textOnDarkMuted} />
           </Pressable>
 
+          {design.postType === 'ORIGINAL' ? (
+            <Pressable style={styles.originalBadge} onPress={() => onTailor?.(design.tailor.id)}>
+              <Text style={styles.originalMark}>✦</Text>
+              <Text style={styles.originalText}>
+                Création originale · {new Date(design.createdAt).toLocaleDateString('fr-FR')}
+              </Text>
+            </Pressable>
+          ) : design.sourceCredit ? (
+            <Text style={styles.sourceLine}>Source : {design.sourceCredit}</Text>
+          ) : null}
+
           {design.description ? <Text style={styles.description}>{design.description}</Text> : null}
 
           <SocialActionBar
@@ -230,6 +241,20 @@ const styles = StyleSheet.create({
   },
   avatarText: { color: colors.textOnDark, fontFamily: fonts.displayBold, fontSize: 15 },
   authorName: { flex: 1, color: colors.textOnDark, fontFamily: fonts.bodyBold, fontSize: 15 },
+  originalBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.md,
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accentSoft,
+  },
+  originalMark: { color: colors.accent, fontFamily: fonts.bodyHeavy, fontSize: 13 },
+  originalText: { color: colors.accent, fontFamily: fonts.bodyBold, fontSize: 13 },
+  sourceLine: { color: colors.textOnDarkMuted, fontFamily: fonts.bodyRegular, fontSize: 13, marginTop: spacing.md },
   description: {
     color: colors.textOnDarkMuted,
     fontFamily: fonts.bodyRegular,

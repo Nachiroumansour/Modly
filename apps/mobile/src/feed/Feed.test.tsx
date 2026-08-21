@@ -14,6 +14,8 @@ const design: Design = {
   title: 'Robe wax',
   description: null,
   category: 'ROBE',
+  postType: 'INSPIRATION',
+  sourceCredit: null,
   imageUrl: 'http://x/img.webp',
   imageWidth: 600,
   imageHeight: 800,
